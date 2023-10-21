@@ -6277,7 +6277,7 @@ function ctld.setStdbMode(_args)
             message_end = " disabled"
         end
         if not _noOutput then 
-            ctld.notifyCoalition(_jtacGroupName .. ", standing by, Laser and Smokes" .. message_end, 10, ctld.jtacUnits[_jtacGroupName].side, ctld.jtacRadioData[_jtacGroupName])
+            ctld.notifyCoalition(_jtacGroupName .. ", Laser and Smokes" .. message_end, 10, ctld.jtacUnits[_jtacGroupName].side, ctld.jtacRadioData[_jtacGroupName])
         end
 
         ctld.jtacSpecialOptions.standbyMode.jtacs[_jtacGroupName] = _value
