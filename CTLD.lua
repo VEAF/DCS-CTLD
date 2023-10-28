@@ -5044,17 +5044,17 @@ function ctld.addRadioListCommand(_side)
 end
 
 function ctld.addJTACRadioCommand(_side)
-
+    
     local _players = coalition.getPlayers(_side)
-
+    
     if _players ~= nil then
-
+        
         for _, _playerUnit in pairs(_players) do
-
+            
             local _groupId = ctld.getGroupId(_playerUnit)
-
+            
             if _groupId then
-
+                
                 local newGroup = false
                 --   env.info("adding command for "..index)
                 if ctld.jtacRadioAdded[tostring(_groupId)] == nil then
@@ -5065,15 +5065,15 @@ function ctld.addJTACRadioCommand(_side)
                     ctld.jtacRadioAdded[tostring(_groupId)] = true
                     -- env.info("Added command for " .. index)
                 end
-
+                
                 --fetch the time to check for a regular refresh
                 local time = timer.getTime()
-
+                
                 --depending on the delay, this part of the radio menu will be refreshed less often or as often as the static JTAC status command, this is for better reliability for the user when navigating through the menus. New groups will get the lists regardless and if a new JTAC is added all lists will be refreshed regardless of the delay.
                 if ctld.jtacLastRadioRefresh + ctld.jtacRadioRefreshDelay <= time or ctld.newJtac[_side] or newGroup then
-
+                    
                     ctld.jtacLastRadioRefresh = time
-
+                    
                     --build the path to the CTLD JTAC menu
                     local jtacCurrentPagePath = {[1]=ctld.jtacMenuName}
                     --build the path for the NextPage submenu on the first page of the CTLD JTAC menu
@@ -5081,48 +5081,48 @@ function ctld.addJTACRadioCommand(_side)
                     local MainNextPagePath = {[1]=ctld.jtacMenuName, [2]=NextPageText}
                     --remove it along with everything that's in it
                     missionCommands.removeItemForGroup(_groupId, MainNextPagePath)
-
+                    
                     --counter to know when to add the next page submenu to fit all of the JTAC group submenus
                     local jtacCounter = 0
-                
+                    
                     for _jtacGroupName,jtacUnit in pairs(ctld.jtacUnits) do
-
-                        local jtacCoalition = ctld.jtacUnits[_jtacGroupName].side
+                        ctld.logTrace(string.format("JTAC - MENU - [%s] - processing menu", ctld.p(_jtacGroupName)))
+                        
                         --if the JTAC is on the same team as the group being considered
+                        local jtacCoalition = ctld.jtacUnits[_jtacGroupName].side
                         if jtacCoalition and jtacCoalition == _side then
                             --only bother removing the submenus on the first page of the CTLD JTAC menu as the other pages were deleted entirely above
                             if ctld.jtacGroupSubMenuPath[_jtacGroupName] and #ctld.jtacGroupSubMenuPath[_jtacGroupName]==2 then
                                 missionCommands.removeItemForGroup(_groupId, ctld.jtacGroupSubMenuPath[_jtacGroupName])
                             end
-
-                            ctld.logTrace(string.format("jtacTargetsList for %s is : %s", ctld.p(_jtacGroupName), ctld.p(ctld.jtacTargetsList[_jtacGroupName])))
-
+                            ctld.logTrace(string.format("JTAC - MENU - [%s] - jtacTargetsList = %s", ctld.p(_jtacGroupName), ctld.p(ctld.jtacTargetsList[_jtacGroupName])))
+                            ctld.logTrace(string.format("JTAC - MENU - [%s] - jtacCurrentTargets = %s", ctld.p(_jtacGroupName), ctld.p(ctld.jtacCurrentTargets[_jtacGroupName])))
+                            
                             --if JTAC has at least one target in sight (if it has only one, it'll already be designated, this menu is then simply to access special options for the JTAC like wind/target speed compensation)
                             if ctld.jtacCurrentTargets[_jtacGroupName] then
-
+                                
                                 local jtacGroupSubMenuName = string.format(_jtacGroupName .. " Selection")
-
+                                
                                 jtacCounter = jtacCounter + 1
                                 --F2 through F10 makes 9 entries possible per page, with one being the NextMenu submenu. F1 is taken by JTAC status entry.
-                                if jtacCounter%9 == 0 then
+                                if jtacCounter % 9 == 0 then
                                     --recover the path to the current page with space available for JTAC group submenus
                                     jtacCurrentPagePath = missionCommands.addSubMenuForGroup(_groupId, NextPageText, jtacCurrentPagePath)
                                 end
                                 --add the JTAC group submenu to the current page
                                 ctld.jtacGroupSubMenuPath[_jtacGroupName] = missionCommands.addSubMenuForGroup(_groupId, jtacGroupSubMenuName, jtacCurrentPagePath)
-
-                                ctld.logTrace(string.format("jtacGroupSubMenuPath for %s is : %s", ctld.p(_jtacGroupName), ctld.p(ctld.jtacGroupSubMenuPath[_jtacGroupName])))
-
+                                ctld.logTrace(string.format("JTAC - MENU - [%s] - jtacGroupSubMenuPath = %s", ctld.p(_jtacGroupName), ctld.p(ctld.jtacGroupSubMenuPath[_jtacGroupName])))
+                                
                                 --make a copy of the JTAC group submenu's path to insert the target's list on as many pages as required. The JTAC's group submenu path only leads to the first page
                                 local jtacTargetPagePath = mist.utils.deepCopy(ctld.jtacGroupSubMenuPath[_jtacGroupName])
                                 
                                 --counter to know when to add the next page submenu to fit all of the targets in the JTAC's group submenu. SMay not actually start at 0 due to static items being present on the first page
                                 local itemCounter = 0
                                 local jtacSpecialOptPagePath = nil
-
+                                
                                 --special options
                                 local SpecialOptionsCounter = 0
-
+                                
                                 for _,_specialOption in pairs(ctld.jtacSpecialOptions) do
                                     if _specialOption.globalToggle then 
                                         
@@ -5130,14 +5130,14 @@ function ctld.addJTACRadioCommand(_side)
                                             itemCounter = itemCounter + 1 --one item is added to the first JTAC target page
                                             jtacSpecialOptPagePath = missionCommands.addSubMenuForGroup(_groupId, "Actions", jtacTargetPagePath)
                                         end
-
+                                        
                                         SpecialOptionsCounter = SpecialOptionsCounter+1
-
+                                        
                                         if SpecialOptionsCounter%10 == 0 then
                                             jtacSpecialOptPagePath = missionCommands.addSubMenuForGroup(_groupId, NextPageText, jtacSpecialOptPagePath)
                                             SpecialOptionsCounter = SpecialOptionsCounter+1 --Added Next Page item
                                         end
-
+                                        
                                         if _specialOption.jtacs then
                                             if _specialOption.jtacs[_jtacGroupName] then
                                                 missionCommands.addCommandForGroup(_groupId, "DISABLE " ..  _specialOption.message, jtacSpecialOptPagePath, _specialOption.setter, {jtacGroupName = _jtacGroupName, value = false})
@@ -5149,46 +5149,48 @@ function ctld.addJTACRadioCommand(_side)
                                         end
                                     end
                                 end
-
+                                
                                 if #ctld.jtacTargetsList[_jtacGroupName] > 1 then
+                                    ctld.logTrace(string.format("JTAC - MENU - [%s] - adding targets menu", ctld.p(_jtacGroupName)))
+
+                                    --add a reset targeting option to revert to automatic JTAC unit targeting
+                                    missionCommands.addCommandForGroup(_groupId, "Reset TGT Selection", jtacTargetPagePath, ctld.setJTACTarget, {jtacGroupName = _jtacGroupName, targetName = nil})
                                     
-                                --add a reset targeting option to revert to automatic JTAC unit targeting
-                                missionCommands.addCommandForGroup(_groupId, "Reset TGT Selection", jtacTargetPagePath, ctld.setJTACTarget, {jtacGroupName = _jtacGroupName, targetName = nil})
-
                                     itemCounter = itemCounter + 1 --one item is added to the first JTAC target page
-
-                                --indicator table to know which unitType was already added to the radio submenu
-                                local typeNameList = {}
-                                for _,target in pairs(ctld.jtacTargetsList[_jtacGroupName]) do
-                                    local targetName = target.unit:getName()
-                                    --check if the jtac has a current target before filtering it out if possible
-                                    if (ctld.jtacCurrentTargets[_jtacGroupName] and targetName ~= ctld.jtacCurrentTargets[_jtacGroupName].name) then
-                                        local targetType_name = target.unit:getTypeName()
-
-                                        if targetType_name then
+                                    
+                                    --indicator table to know which unitType was already added to the radio submenu
+                                    local typeNameList = {}
+                                    for _,target in pairs(ctld.jtacTargetsList[_jtacGroupName]) do
+                                        local targetName = target.unit:getName()
+                                        --check if the jtac has a current target before filtering it out if possible
+                                        if (ctld.jtacCurrentTargets[_jtacGroupName] and targetName ~= ctld.jtacCurrentTargets[_jtacGroupName].name) then
+                                            local targetType_name = target.unit:getTypeName()
+                                            
+                                            if targetType_name then
                                                 if typeNameList[targetType_name] then
                                                     typeNameList[targetType_name].amount = typeNameList[targetType_name].amount + 1
-                                            else
+                                                else
                                                     typeNameList[targetType_name] = {}
                                                     typeNameList[targetType_name].targetName = targetName --store the first targetName
                                                     typeNameList[targetType_name].amount = 1
+                                                end
                                             end
                                         end
                                     end
-                                end
-
-                                for typeName,info in pairs(typeNameList) do
-                                    local amount = info.amount
-                                    local targetName = info.targetName
-                                    itemCounter = itemCounter + 1
-
+                                    
+                                    for typeName,info in pairs(typeNameList) do
+                                        local amount = info.amount
+                                        local targetName = info.targetName
+                                        itemCounter = itemCounter + 1
+                                        
                                         --F1 through F10 makes 10 entries possible per page, with one being the NextMenu submenu.
                                         if itemCounter%10 == 0 then
-                                        jtacTargetPagePath = missionCommands.addSubMenuForGroup(_groupId, NextPageText, jtacTargetPagePath)
+                                            jtacTargetPagePath = missionCommands.addSubMenuForGroup(_groupId, NextPageText, jtacTargetPagePath)
                                             itemCounter = itemCounter + 1 --added the next page item
+                                        end
+                                        
+                                        missionCommands.addCommandForGroup(_groupId, string.format(typeName .. "(" .. amount .. ")"), jtacTargetPagePath, ctld.setJTACTarget, {jtacGroupName = _jtacGroupName, targetName = targetName})
                                     end
-
-                                    missionCommands.addCommandForGroup(_groupId, string.format(typeName .. "(" .. amount .. ")"), jtacTargetPagePath, ctld.setJTACTarget, {jtacGroupName = _jtacGroupName, targetName = targetName})
                                 end
                             end
                         end
@@ -5196,8 +5198,7 @@ function ctld.addJTACRadioCommand(_side)
                 end
             end
         end
-        end
-
+        
         if ctld.newJtac[_side] then
             ctld.newJtac[_side] = false
         end
@@ -5329,7 +5330,7 @@ function ctld.JTACAutoLase(_jtacGroupName, _laserCode, _smoke, _lock, _colour, _
                         --jtac soldier being transported by heli
                         ctld.cleanupJTAC(_jtacGroupName)
 
-                        env.info(_jtacGroupName .. ' in Transport - Waiting 10 seconds')
+                        ctld.logTrace(string.format("JTAC - LASE - [%s] - in transport, waiting - scheduling JTACAutoLase in %ss at %s", ctld.p(_jtacGroupName), ctld.p(10), ctld.p(timer.getTime() + 10)))
                         timer.scheduleFunction(ctld.timerJTACAutoLase, { _jtacGroupName, _laserCode, _smoke, _lock, _colour, _radio }, timer.getTime() + 10)
                         return
                     end
@@ -5338,7 +5339,7 @@ function ctld.JTACAutoLase(_jtacGroupName, _laserCode, _smoke, _lock, _colour, _
                         --jtac vehicle being transported by heli
                         ctld.cleanupJTAC(_jtacGroupName)
 
-                        env.info(_jtacGroupName .. ' in Transport - Waiting 10 seconds')
+                        ctld.logTrace(string.format("JTAC - LASE - [%s] - in transport, waiting - scheduling JTACAutoLase in %ss at %s", ctld.p(_jtacGroupName), ctld.p(10), ctld.p(timer.getTime() + 10)))
                         timer.scheduleFunction(ctld.timerJTACAutoLase, { _jtacGroupName, _laserCode, _smoke, _lock, _colour, _radio }, timer.getTime() + 10)
                         return
                     end
@@ -5364,7 +5365,7 @@ function ctld.JTACAutoLase(_jtacGroupName, _laserCode, _smoke, _lock, _colour, _
         --Targets list, special options and Selected target initialization
         if not ctld.jtacTargetsList[_jtacGroupName] then
             --Target list
-                        ctld.jtacTargetsList[_jtacGroupName] = {}
+            ctld.jtacTargetsList[_jtacGroupName] = {}
             if _jtacCoalition then ctld.newJtac[_jtacCoalition] = true end
 
             --Special Options
@@ -5407,7 +5408,7 @@ function ctld.JTACAutoLase(_jtacGroupName, _laserCode, _smoke, _lock, _colour, _
 
         ctld.cleanupJTAC(_jtacGroupName)
 
-        env.info(_jtacGroupName .. ' Not Active - Waiting 30 seconds')
+        ctld.logTrace(string.format("JTAC - LASE - [%s] - not active, scheduling JTACAutoLase in 30s at %s", ctld.p(_jtacGroupName), ctld.p(timer.getTime() + 30)))
         timer.scheduleFunction(ctld.timerJTACAutoLase, { _jtacGroupName, _laserCode, _smoke, _lock, _colour, _radio }, timer.getTime() + 30)
 
         return
@@ -5530,24 +5531,24 @@ function ctld.JTACAutoLase(_jtacGroupName, _laserCode, _smoke, _lock, _colour, _
         local targetSpeedVec = _enemyUnit:getVelocity()
         local targetSpeed = math.sqrt(targetSpeedVec.x^2+targetSpeedVec.y^2+targetSpeedVec.z^2)
         local maxUpdateDist = 5 --maximum distance the unit will be allowed to travel before the lase spot is updated again
-        ctld.logDebug(string.format("targetSpeed=%s", ctld.p(targetSpeed)))
+        ctld.logTrace(string.format("targetSpeed=%s", ctld.p(targetSpeed)))
 
         ctld.laseUnit(_enemyUnit, _jtacUnit, _jtacGroupName, _laserCode)
 
         --if the target is going sufficiently fast for it to wander off futher than the maxUpdateDist, schedule laseUnit calls to update the lase spot only (we consider that the unit lives and drives on between JTACAutoLase calls)
         if targetSpeed >= maxUpdateDist/refreshDelay then
             local updateTimeStep = maxUpdateDist/targetSpeed --calculate the time step so that the target is never more than maxUpdateDist from it's last lased position
-            ctld.logDebug(string.format("updateTimeStep=%s", ctld.p(updateTimeStep)))
-
+            ctld.logTrace(string.format("JTAC - LASE - [%s] - target is moving at %s m/s, schedulting lasing steps every %ss", ctld.p(_jtacGroupName), ctld.p(targetSpeed), ctld.p(updateTimeStep)))
+            
             local i = 1
             while i*updateTimeStep <= refreshDelay - updateTimeStep do --while the scheduled time for the laseUnit call isn't greater than the time between two JTACAutoLase() calls minus one time step (because at the next time step JTACAutoLase() should have been called and this in term also calls laseUnit())
-                ctld.logTrace("ctld.laseUnit scheduled " .. i)
                 timer.scheduleFunction(ctld.timerLaseUnit,{_enemyUnit, _jtacUnit, _jtacGroupName, _laserCode}, timer.getTime()+i*updateTimeStep)
                 i = i + 1
             end
+            ctld.logTrace(string.format("JTAC - LASE - [%s] - scheduled %s moving target lasing steps", ctld.p(_jtacGroupName), ctld.p(i)))
         end
 
-        --   env.info('Timer timerSparkleLase '..jtacGroupName.." "..laserCode.." "..enemyUnit:getName())
+        ctld.logTrace(string.format("JTAC - LASE - [%s] - scheduling JTACAutoLase in %ss at %s", ctld.p(_jtacGroupName), ctld.p(refreshDelay), ctld.p(timer.getTime() + refreshDelay)))
         timer.scheduleFunction(ctld.timerJTACAutoLase, { _jtacGroupName, _laserCode, _smoke, _lock, _colour, _radio }, timer.getTime() + refreshDelay)
 
         if _smoke == true then
@@ -5561,12 +5562,13 @@ function ctld.JTACAutoLase(_jtacGroupName, _laserCode, _smoke, _lock, _colour, _
         end
 
     else
-        -- env.info('LASE: No Enemies Nearby / Standby mode')
+        ctld.logDebug(string.format("JTAC - MODE - [%s] - No Enemies Nearby / Standby mode", ctld.p(_jtacGroupName)))
 
         -- stop lazing the old spot
+        ctld.logDebug(string.format("JTAC - LASE - [%s] - canceling lasing of the old spot", ctld.p(_jtacGroupName)))
         ctld.cancelLase(_jtacGroupName)
-        --  env.info('Timer Slow timerSparkleLase '..jtacGroupName.." "..laserCode.." "..enemyUnit:getName())
 
+        ctld.logTrace(string.format("JTAC - LASE - [%s] - scheduling JTACAutoLase in %ss at %s", ctld.p(_jtacGroupName), ctld.p(5), ctld.p(timer.getTime() + 5)))
         timer.scheduleFunction(ctld.timerJTACAutoLase, { _jtacGroupName, _laserCode, _smoke, _lock, _colour, _radio }, timer.getTime() + 5)
     end
 
