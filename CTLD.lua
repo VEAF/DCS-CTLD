@@ -29,8 +29,8 @@ ctld.Id = "CTLD - "
 ctld.Version = "202310.02"
 
 -- To add debugging messages to dcs.log, change the following log levels to `true`; `Debug` is less detailed than `Trace`
-ctld.Debug = true
-ctld.Trace = true
+ctld.Debug = false
+ctld.Trace = false
 
 ctld.alreadyInitialized = false -- if true, ctld.initialize() will not run
 
