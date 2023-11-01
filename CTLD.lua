@@ -5098,8 +5098,16 @@ function ctld.addJTACRadioCommand(_side)
                             ctld.logTrace(string.format("JTAC - MENU - [%s] - jtacTargetsList = %s", ctld.p(_jtacGroupName), ctld.p(ctld.jtacTargetsList[_jtacGroupName])))
                             ctld.logTrace(string.format("JTAC - MENU - [%s] - jtacCurrentTargets = %s", ctld.p(_jtacGroupName), ctld.p(ctld.jtacCurrentTargets[_jtacGroupName])))
                             
-                            --if JTAC has at least one target in sight (if it has only one, it'll already be designated, this menu is then simply to access special options for the JTAC like wind/target speed compensation)
-                            if ctld.jtacCurrentTargets[_jtacGroupName] then
+                            local jtacActionMenu = false
+                            for _,_specialOptionTable in pairs(ctld.jtacSpecialOptions) do
+                                if _specialOptionTable.globalToggle then
+                                    jtacActionMenu = true
+                                    break
+                                end
+                            end
+
+                            --if JTAC has at least one other target in sight or (if special options are available (NOTE : accessed through the JTAC's own menu also) and the JTAC has at least one target)
+                            if (ctld.jtacTargetsList[_jtacGroupName] and #ctld.jtacTargetsList[_jtacGroupName] > 1) or (ctld.jtacCurrentTargets[_jtacGroupName] and jtacActionMenu) then
                                 
                                 local jtacGroupSubMenuName = string.format(_jtacGroupName .. " Selection")
                                 
@@ -5120,32 +5128,34 @@ function ctld.addJTACRadioCommand(_side)
                                 local itemCounter = 0
                                 local jtacSpecialOptPagePath = nil
                                 
-                                --special options
-                                local SpecialOptionsCounter = 0
-                                
-                                for _,_specialOption in pairs(ctld.jtacSpecialOptions) do
-                                    if _specialOption.globalToggle then 
-                                        
-                                        if not jtacSpecialOptPagePath then
-                                            itemCounter = itemCounter + 1 --one item is added to the first JTAC target page
-                                            jtacSpecialOptPagePath = missionCommands.addSubMenuForGroup(_groupId, "Actions", jtacTargetPagePath)
-                                        end
-                                        
-                                        SpecialOptionsCounter = SpecialOptionsCounter+1
-                                        
-                                        if SpecialOptionsCounter%10 == 0 then
-                                            jtacSpecialOptPagePath = missionCommands.addSubMenuForGroup(_groupId, NextPageText, jtacSpecialOptPagePath)
-                                            SpecialOptionsCounter = SpecialOptionsCounter+1 --Added Next Page item
-                                        end
-                                        
-                                        if _specialOption.jtacs then
-                                            if _specialOption.jtacs[_jtacGroupName] then
-                                                missionCommands.addCommandForGroup(_groupId, "DISABLE " ..  _specialOption.message, jtacSpecialOptPagePath, _specialOption.setter, {jtacGroupName = _jtacGroupName, value = false})
-                                            else
-                                                missionCommands.addCommandForGroup(_groupId, "ENABLE " .. _specialOption.message, jtacSpecialOptPagePath, _specialOption.setter, {jtacGroupName = _jtacGroupName, value = true})
+                                if jtacActionMenu then
+                                    --special options
+                                    local SpecialOptionsCounter = 0
+                                    
+                                    for _,_specialOption in pairs(ctld.jtacSpecialOptions) do
+                                        if _specialOption.globalToggle then 
+                                            
+                                            if not jtacSpecialOptPagePath then
+                                                itemCounter = itemCounter + 1 --one item is added to the first JTAC target page
+                                                jtacSpecialOptPagePath = missionCommands.addSubMenuForGroup(_groupId, "Actions", jtacTargetPagePath)
                                             end
-                                        else
-                                            missionCommands.addCommandForGroup(_groupId, "REQUEST " .. _specialOption.message, jtacSpecialOptPagePath, _specialOption.setter, {jtacGroupName = _jtacGroupName, value = false}) --value is not used here
+                                            
+                                            SpecialOptionsCounter = SpecialOptionsCounter+1
+                                            
+                                            if SpecialOptionsCounter%10 == 0 then
+                                                jtacSpecialOptPagePath = missionCommands.addSubMenuForGroup(_groupId, NextPageText, jtacSpecialOptPagePath)
+                                                SpecialOptionsCounter = SpecialOptionsCounter+1 --Added Next Page item
+                                            end
+                                            
+                                            if _specialOption.jtacs then
+                                                if _specialOption.jtacs[_jtacGroupName] then
+                                                    missionCommands.addCommandForGroup(_groupId, "DISABLE " ..  _specialOption.message, jtacSpecialOptPagePath, _specialOption.setter, {jtacGroupName = _jtacGroupName, value = false})
+                                                else
+                                                    missionCommands.addCommandForGroup(_groupId, "ENABLE " .. _specialOption.message, jtacSpecialOptPagePath, _specialOption.setter, {jtacGroupName = _jtacGroupName, value = true})
+                                                end
+                                            else
+                                                missionCommands.addCommandForGroup(_groupId, "REQUEST " .. _specialOption.message, jtacSpecialOptPagePath, _specialOption.setter, {jtacGroupName = _jtacGroupName, value = false}) --value is not used here
+                                            end
                                         end
                                     end
                                 end
