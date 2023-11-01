@@ -5070,7 +5070,7 @@ function ctld.addJTACRadioCommand(_side)
                 local time = timer.getTime()
                 
                 --depending on the delay, this part of the radio menu will be refreshed less often or as often as the static JTAC status command, this is for better reliability for the user when navigating through the menus. New groups will get the lists regardless and if a new JTAC is added all lists will be refreshed regardless of the delay.
-                if ctld.jtacLastRadioRefresh + ctld.jtacRadioRefreshDelay <= time or ctld.newJtac[_side] or newGroup then
+                if ctld.jtacLastRadioRefresh + ctld.jtacRadioRefreshDelay <= time or ctld.refreshJTACmenu[_side] or newGroup then
                     
                     ctld.jtacLastRadioRefresh = time
                     
@@ -5209,8 +5209,8 @@ function ctld.addJTACRadioCommand(_side)
             end
         end
         
-        if ctld.newJtac[_side] then
-            ctld.newJtac[_side] = false
+        if ctld.refreshJTACmenu[_side] then
+            ctld.refreshJTACmenu[_side] = false
         end
     end
 end
@@ -5281,9 +5281,9 @@ ctld.jtacSpecialOptions = { --list which contains the status of special options 
 }
 ctld.jtacRadioAdded = {} --keeps track of who's had the radio command added
 ctld.jtacGroupSubMenuPath = {} --keeps track of which submenu contains each JTAC's target selection menu
-ctld.jtacRadioRefreshDelay = 60 --determines how often in seconds the dynamic parts of the jtac radio menu (target lists) will be refreshed
+ctld.jtacRadioRefreshDelay = 120 --determines how often in seconds the dynamic parts of the jtac radio menu (target lists) will be refreshed
 ctld.jtacLastRadioRefresh = 0 -- time at which the target lists were refreshed for everyone at least
-ctld.newJtac = {} --indicator to know when a new JTAC is added to a coalition in order to rebuild the corresponding target lists
+ctld.refreshJTACmenu = {} --indicator to know when a new JTAC is added to a coalition in order to rebuild the corresponding target lists
 ctld.jtacGeneratedLaserCodes = {} -- keeps track of generated codes, cycles when they run out
 ctld.jtacLaserPointCodes = {}
 ctld.jtacRadioData = {}
@@ -5376,7 +5376,7 @@ function ctld.JTACAutoLase(_jtacGroupName, _laserCode, _smoke, _lock, _colour, _
         if not ctld.jtacTargetsList[_jtacGroupName] then
             --Target list
             ctld.jtacTargetsList[_jtacGroupName] = {}
-            if _jtacCoalition then ctld.newJtac[_jtacCoalition] = true end
+            if _jtacCoalition then ctld.refreshJTACmenu[_jtacCoalition] = true end
 
             --Special Options
             for _,_specialOption in pairs(ctld.jtacSpecialOptions) do
@@ -6192,6 +6192,8 @@ function ctld.setJTACTarget(_args)
                 ctld.setStdbMode({jtacGroupName = _jtacGroupName, value = false}) --make the JTAC exit standby mode after either target selection or targeting selection reset
             end
         end
+
+        ctld.refreshJTACmenu[ctld.jtacUnits[_jtacGroupName].side] = true
     end
 end
 
@@ -6227,6 +6229,7 @@ function ctld.setStdbMode(_args)
         end
 
         ctld.jtacSpecialOptions.standbyMode.jtacs[_jtacGroupName] = _value
+        ctld.refreshJTACmenu[ctld.jtacUnits[_jtacGroupName].side] = true
     end
 end
 ctld.jtacSpecialOptions.standbyMode.setter = ctld.setStdbMode
@@ -6248,6 +6251,7 @@ function ctld.setLaseCompensation(_args)
         end
 
         ctld.jtacSpecialOptions.laseSpotCorrections.jtacs[_jtacGroupName] = _value
+        ctld.refreshJTACmenu[ctld.jtacUnits[_jtacGroupName].side] = true
     end
 end
 ctld.jtacSpecialOptions.laseSpotCorrections.setter = ctld.setLaseCompensation
