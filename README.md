@@ -719,15 +719,15 @@ The automatic smokes will be offset from the target by the distances declared in
 
 In practice, this is what the F10 radio menu for JTACs looks like :
 
-![alt text](https://imgur.com/pfVldQ1 "JTAC F10 Radio Menu")
+![alt text](https://imgur.com/pfVldQ1.png "JTAC F10 Radio Menu")
 
 You can see the "JTAC Status" command and the Selection Lists for each JTAC. Those look like :
 
-![alt text](https://imgur.com/oDtajwv "Selection List for a JTAC")
+![alt text](https://imgur.com/oDtajwv.png "Selection List for a JTAC")
 
 Each target type within LOS of the JTAC and not already being lased (by any JTAC) is listed. Quantity is indicated. There is also the Action menu which looks like :
 
-![alt text](https://imgur.com/nYWODLj "Action List for a JTAC")
+![alt text](https://imgur.com/nYWODLj.png "Action List for a JTAC")
 
 This will allow you to act on the behavior of the JTAC or make requests. These items get updated every minute or so to reflect current configuration, same for the target list.
 
