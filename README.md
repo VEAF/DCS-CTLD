@@ -731,6 +731,7 @@ Each target type within LOS of the JTAC and not already being lased (by any JTAC
 
 This will allow you to act on the behavior of the JTAC or make requests. These items get updated every minute or so to reflect current configuration, same for the target list.
 
+*** NOTE: Please be patient with the JTAC menu, wait at least 10 seconds between commands. If a spurious command is triggered, wait the same 10 seconds and try again. Sorry for this inconvenience. ***
 
 To add JTACs or AFACs to the mission using the editor place a JTAC/AFAC unit on the map putting each JTAC/AFAC in it's own group containing only itself and no
 other units. Name the group something easy to remember e.g. JTAC1 and make sure the JTAC units have a unique name which must
