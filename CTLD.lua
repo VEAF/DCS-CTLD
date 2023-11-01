@@ -26,7 +26,7 @@ ctld = {} -- DONT REMOVE!
 ctld.Id = "CTLD - "
 
 --- Version.
-ctld.Version = "202310.01"
+ctld.Version = "202310.02"
 
 -- To add debugging messages to dcs.log, change the following log levels to `true`; `Debug` is less detailed than `Trace`
 ctld.Debug = false
@@ -1037,7 +1037,6 @@ end
 -- EG: ctld.activatePickupZone("pickzone3")
 -- This is enable pickzone3 to be used as a pickup zone for the team set
 function ctld.activatePickupZone(_zoneName)
-    ctld.logDebug(string.format("ctld.activatePickupZone(_zoneName=%s)", ctld.p(_zoneName)))
 
     local _triggerZone = trigger.misc.getZone(_zoneName) -- trigger to use as reference position
 
@@ -1585,7 +1584,6 @@ function ctld.spawnCrateStatic(_country, _unitId, _point, _name, _weight,_side)
         _crate["heading"] = 0
         _crate["country"] = _country
 
-        ctld.logTrace(string.format("_crate=%s", ctld.p(_crate)))
         mist.dynAddStatic(_crate)
 
         _spawnedCrate = StaticObject.getByName(_crate["name"])
@@ -1866,12 +1864,9 @@ function ctld.deployTroops(_heli, _troops)
                 if _extractZone == false then
 
                     local _droppedTroops = ctld.spawnDroppedGroup(_heli:getPoint(), _onboard.troops, false)
-                    ctld.logTrace(string.format("_onboard.troops=%s", ctld.p(_onboard.troops)))
                     if _onboard.troops.jtac or _droppedTroops:getName():lower():find("jtac") then
                         local _code = table.remove(ctld.jtacGeneratedLaserCodes, 1)
-                        ctld.logTrace(string.format("_code=%s", ctld.p(_code)))
                         table.insert(ctld.jtacGeneratedLaserCodes, _code)
-                        ctld.logTrace(string.format("_droppedTroops:getName()=%s", ctld.p(_droppedTroops:getName())))
                         ctld.JTACAutoLase(_droppedTroops:getName(), _code)
                     end
 
@@ -1963,7 +1958,6 @@ function ctld.generateTroopTypes(_side, _countOrTemplate, _country)
         local _weight = 0
         for i = 1, count do
             local _soldierWeight = math.random(90, 120) * ctld.SOLDIER_WEIGHT / 100
-            ctld.logTrace(string.format("_soldierWeight=%s", ctld.p(_soldierWeight)))
             _weight = _weight + _soldierWeight + ctld.KIT_WEIGHT + additionalWeight
         end
         return _weight
@@ -1972,54 +1966,43 @@ function ctld.generateTroopTypes(_side, _countOrTemplate, _country)
     if type(_countOrTemplate) == "table" then
 
         if _countOrTemplate.aa then
-            ctld.logTrace(string.format("_countOrTemplate.aa=%s", ctld.p(_countOrTemplate.aa)))
             if _side == 2 then
                 _troops = ctld.insertIntoTroopsArray("Soldier stinger",_countOrTemplate.aa,_troops)
             else
                 _troops = ctld.insertIntoTroopsArray("SA-18 Igla manpad",_countOrTemplate.aa,_troops)
             end
             _weight = _weight + getSoldiersWeight(_countOrTemplate.aa, ctld.MANPAD_WEIGHT)
-            ctld.logTrace(string.format("_weight=%s", ctld.p(_weight)))
         end
 
         if _countOrTemplate.inf then
-            ctld.logTrace(string.format("_countOrTemplate.inf=%s", ctld.p(_countOrTemplate.inf)))
             if _side == 2 then
                 _troops = ctld.insertIntoTroopsArray("Soldier M4",_countOrTemplate.inf,_troops)
             else
                 _troops = ctld.insertIntoTroopsArray("Soldier AK",_countOrTemplate.inf,_troops)
             end
             _weight = _weight + getSoldiersWeight(_countOrTemplate.inf, ctld.RIFLE_WEIGHT)
-            ctld.logTrace(string.format("_weight=%s", ctld.p(_weight)))
         end
 
         if _countOrTemplate.mg then
-            ctld.logTrace(string.format("_countOrTemplate.mg=%s", ctld.p(_countOrTemplate.mg)))
             if _side == 2 then
                 _troops = ctld.insertIntoTroopsArray("Soldier M249",_countOrTemplate.mg,_troops)
             else
                 _troops = ctld.insertIntoTroopsArray("Paratrooper AKS-74",_countOrTemplate.mg,_troops)
             end
             _weight = _weight + getSoldiersWeight(_countOrTemplate.mg, ctld.MG_WEIGHT)
-            ctld.logTrace(string.format("_weight=%s", ctld.p(_weight)))
         end
 
         if _countOrTemplate.at then
-            ctld.logTrace(string.format("_countOrTemplate.at=%s", ctld.p(_countOrTemplate.at)))
             _troops = ctld.insertIntoTroopsArray("Paratrooper RPG-16",_countOrTemplate.at,_troops)
             _weight = _weight + getSoldiersWeight(_countOrTemplate.at, ctld.RPG_WEIGHT)
-            ctld.logTrace(string.format("_weight=%s", ctld.p(_weight)))
         end
 
         if _countOrTemplate.mortar then
-            ctld.logTrace(string.format("_countOrTemplate.mortar=%s", ctld.p(_countOrTemplate.mortar)))
             _troops = ctld.insertIntoTroopsArray("2B11 mortar",_countOrTemplate.mortar,_troops)
             _weight = _weight + getSoldiersWeight(_countOrTemplate.mortar, ctld.MORTAR_WEIGHT)
-            ctld.logTrace(string.format("_weight=%s", ctld.p(_weight)))
         end
 
         if _countOrTemplate.jtac then
-            ctld.logTrace(string.format("_countOrTemplate.jtac=%s", ctld.p(_countOrTemplate.jtac)))
             if _side == 2 then
                 _troops = ctld.insertIntoTroopsArray("Soldier M4",_countOrTemplate.jtac,_troops, "JTAC")
             else
@@ -2027,7 +2010,6 @@ function ctld.generateTroopTypes(_side, _countOrTemplate, _country)
             end
             _hasJTAC = true
             _weight = _weight + getSoldiersWeight(_countOrTemplate.jtac, ctld.JTAC_WEIGHT + ctld.RIFLE_WEIGHT)
-            ctld.logTrace(string.format("_weight=%s", ctld.p(_weight)))
         end
 
     else
@@ -2039,37 +2021,29 @@ function ctld.generateTroopTypes(_side, _countOrTemplate, _country)
                 if _i <=2 then
                     _unitType = "Soldier M249"
                     _weight = _weight + getSoldiersWeight(1, ctld.MG_WEIGHT)
-                    ctld.logTrace(string.format("_unitType=%s, _weight=%s", ctld.p(_unitType), ctld.p(_weight)))
                 elseif ctld.spawnRPGWithCoalition and _i > 2 and _i <= 4 then
                     _unitType = "Paratrooper RPG-16"
                     _weight = _weight + getSoldiersWeight(1, ctld.RPG_WEIGHT)
-                    ctld.logTrace(string.format("_unitType=%s, _weight=%s", ctld.p(_unitType), ctld.p(_weight)))
                 elseif ctld.spawnStinger and _i > 4 and _i <= 5 then
                     _unitType = "Soldier stinger"
                     _weight = _weight + getSoldiersWeight(1, ctld.MANPAD_WEIGHT)
-                    ctld.logTrace(string.format("_unitType=%s, _weight=%s", ctld.p(_unitType), ctld.p(_weight)))
                 else
                     _unitType = "Soldier M4"
                     _weight = _weight + getSoldiersWeight(1, ctld.RIFLE_WEIGHT)
-                    ctld.logTrace(string.format("_unitType=%s, _weight=%s", ctld.p(_unitType), ctld.p(_weight)))
                 end
             else
                 if _i <=2 then
                     _unitType = "Paratrooper AKS-74"
                     _weight = _weight + getSoldiersWeight(1, ctld.MG_WEIGHT)
-                    ctld.logTrace(string.format("_unitType=%s, _weight=%s", ctld.p(_unitType), ctld.p(_weight)))
                 elseif ctld.spawnRPGWithCoalition and _i > 2 and _i <= 4 then
                     _unitType = "Paratrooper RPG-16"
                     _weight = _weight + getSoldiersWeight(1, ctld.RPG_WEIGHT)
-                    ctld.logTrace(string.format("_unitType=%s, _weight=%s", ctld.p(_unitType), ctld.p(_weight)))
                 elseif ctld.spawnStinger and _i > 4 and _i <= 5 then
                     _unitType = "SA-18 Igla manpad"
                     _weight = _weight + getSoldiersWeight(1, ctld.MANPAD_WEIGHT)
-                    ctld.logTrace(string.format("_unitType=%s, _weight=%s", ctld.p(_unitType), ctld.p(_weight)))
                 else
                     _unitType = "Infantry AK"
                     _weight = _weight + getSoldiersWeight(1, ctld.RIFLE_WEIGHT)
-                    ctld.logTrace(string.format("_unitType=%s, _weight=%s", ctld.p(_unitType), ctld.p(_weight)))
                 end
             end
 
@@ -2085,7 +2059,6 @@ function ctld.generateTroopTypes(_side, _countOrTemplate, _country)
         _groupName = "Dropped JTAC Group"
     end
     local _details = { units = _troops, groupId = _groupId, groupName = string.format("%s %i", _groupName, _groupId), side = _side, country = _country, weight = _weight, jtac = _hasJTAC }
-    ctld.logTrace(string.format("total  weight=%s", ctld.p(_weight)))
 
     return _details
 end
@@ -2144,10 +2117,8 @@ function ctld.loadTroops(_heli, _troops, _numberOrTemplate)
         _list = ctld.vehiclesForTransportBLUE
     end
 
-    ctld.logTrace(string.format("_troops=%s", ctld.p(_troops)))
     if _troops then
         _onboard.troops = ctld.generateTroopTypes(_heli:getCoalition(), _numberOrTemplate, _heli:getCountry())
-        ctld.logTrace(string.format("_onboard.troops=%s", ctld.p(_onboard.troops)))
         trigger.action.outTextForCoalition(_heli:getCoalition(), ctld.getPlayerNameOrType(_heli) .. " loaded troops into " .. _heli:getTypeName(), 10)
 
         ctld.processCallback({unit = _heli, onboard = _onboard.troops, action = "load_troops"})
@@ -2163,7 +2134,6 @@ function ctld.loadTroops(_heli, _troops, _numberOrTemplate)
     end
 
     ctld.inTransitTroops[_heli:getName()] = _onboard
-    ctld.logTrace(string.format("ctld.inTransitTroops=%s", ctld.p(ctld.inTransitTroops[_heli:getName()])))
     ctld.adaptWeightToCargo(_heli:getName())
 end
 
@@ -2543,7 +2513,6 @@ function ctld.checkTroopStatus(_args)
     end
 
     local _, _message = ctld.getWeightOfCargo(_unitName)
-    ctld.logTrace(string.format("_message=%s", ctld.p(_message)))
     if _message and _message ~= "" then
         ctld.displayMessageToGroup(_heli, _message, 10)
     end
@@ -2573,7 +2542,6 @@ function ctld.adaptWeightToCargo(unitName)
 end
 
 function ctld.getWeightOfCargo(unitName)
-    ctld.logDebug(string.format("ctld.getWeightOfCargo(%s)", ctld.p(unitName)))
 
     local FOB_CRATE_WEIGHT = 800
     local _weight = 0
@@ -2581,13 +2549,10 @@ function ctld.getWeightOfCargo(unitName)
 
     -- add troops weight
     if ctld.inTransitTroops[unitName] then
-        ctld.logTrace("ctld.inTransitTroops = true")
         local _inTransit = ctld.inTransitTroops[unitName]
         if _inTransit then
-            ctld.logTrace(string.format("_inTransit=%s", ctld.p(_inTransit)))
             local _troops = _inTransit.troops
             if _troops and _troops.units then
-                ctld.logTrace(string.format("_troops.weight=%s", ctld.p(_troops.weight)))
                 _description = _description .. string.format("%s troops onboard (%s kg)\n", #_troops.units, _troops.weight)
                 _weight = _weight + _troops.weight
             end
@@ -2596,44 +2561,35 @@ function ctld.getWeightOfCargo(unitName)
                 for _, _unit in pairs(_vehicles.units) do
                     _weight = _weight + _unit.weight
                 end
-                ctld.logTrace(string.format("_weight=%s", ctld.p(_weight)))
                 _description = _description .. string.format("%s vehicles onboard (%s kg)\n", #_vehicles.units, _weight)
             end
         end
     end
-    ctld.logTrace(string.format("with troops and vehicles : weight = %s", tostring(_weight)))
 
     -- add FOB crates weight
     if ctld.inTransitFOBCrates[unitName] then
-        ctld.logTrace("ctld.inTransitFOBCrates = true")
         _weight = _weight + FOB_CRATE_WEIGHT
         _description = _description .. string.format("1 FOB Crate oboard (%s kg)\n", FOB_CRATE_WEIGHT)
     end
-    ctld.logTrace(string.format("with FOB crates : weight = %s", tostring(_weight)))
 
     -- add simulated slingload crates weight
     local _crate = ctld.inTransitSlingLoadCrates[unitName]
     if _crate then
-        ctld.logTrace(string.format("_crate=%s", ctld.p(_crate)))
         if _crate.simulatedSlingload then
-            ctld.logTrace(string.format("_crate.weight=%s", ctld.p(_crate.weight)))
             _weight = _weight + _crate.weight
             _description = _description .. string.format("1 %s crate onboard (%s kg)\n", _crate.desc, _crate.weight)
         end
     end
-    ctld.logTrace(string.format("with simulated slingload crates : weight = %s", tostring(_weight)))
     if _description ~= "" then
         _description = _description .. string.format("Total weight of cargo : %s kg\n", _weight)
     else
         _description = "No cargo."
     end
-    ctld.logTrace(string.format("_description = %s", tostring(_description)))
 
     return _weight, _description
 end
 
 function ctld.checkHoverStatus()
-    --ctld.logDebug(string.format("ctld.checkHoverStatus()"))
     timer.scheduleFunction(ctld.checkHoverStatus, nil, timer.getTime() + 1.0)
 
     local _status, _result = pcall(function()
@@ -2646,13 +2602,10 @@ function ctld.checkHoverStatus()
             --only check transports that are hovering and not planes
             if _transUnit ~= nil and ctld.inTransitSlingLoadCrates[_name] == nil and ctld.inAir(_transUnit) and ctld.unitCanCarryVehicles(_transUnit) == false then
 
-                --ctld.logTrace(string.format("%s - capable of slingloading", ctld.p(_name)))
 
                 local _crates = ctld.getCratesAndDistance(_transUnit)
-                --ctld.logTrace(string.format("_crates = %s", ctld.p(_crates)))
 
                 for _, _crate in pairs(_crates) do
-                    --ctld.logTrace(string.format("_crate = %s", ctld.p(_crate)))
                     if _crate.dist < ctld.maxDistanceFromCrate and _crate.details.unit ~= "FOB" then
 
                         --check height!
@@ -2660,12 +2613,10 @@ function ctld.checkHoverStatus()
                         --env.info("HEIGHT " .. _name .. " " .. _height .. " " .. _transUnit:getPoint().y .. " " .. _crate.crateUnit:getPoint().y)
                         --  ctld.heightDiff(_transUnit)
                         --env.info("HEIGHT ABOVE GROUD ".._name.." ".._height.." ".._transUnit:getPoint().y.." ".._crate.crateUnit:getPoint().y)
-                        --ctld.logTrace(string.format("_height = %s", ctld.p(_height)))
 
                         if _height > ctld.minimumHoverHeight and _height <= ctld.maximumHoverHeight then
 
                             local _time = ctld.hoverStatus[_transUnit:getName()]
-                            --ctld.logTrace(string.format("_time = %s", ctld.p(_time)))
 
                             if _time == nil then
                                 ctld.hoverStatus[_transUnit:getName()] = ctld.hoverTime
@@ -2694,7 +2645,6 @@ function ctld.checkHoverStatus()
 
                                 local _copiedCrate = mist.utils.deepCopy(_crate.details)
                                 _copiedCrate.simulatedSlingload = true
-                                --ctld.logTrace(string.format("_copiedCrate = %s", ctld.p(_copiedCrate)))
                                 ctld.inTransitSlingLoadCrates[_name] = _copiedCrate
                                 ctld.adaptWeightToCargo(_name)
                             end
@@ -4474,7 +4424,6 @@ end
 
 -- are we in pickup zone
 function ctld.inPickupZone(_heli)
-    ctld.logDebug(string.format("ctld.inPickupZone(_heli=%s)", ctld.p(_heli)))
 
     if ctld.inAir(_heli) then
         return { inZone = false, limit = -1, index = -1 }
@@ -4483,7 +4432,6 @@ function ctld.inPickupZone(_heli)
     local _heliPoint = _heli:getPoint()
 
     for _i, _zoneDetails in pairs(ctld.pickupZones) do
-        ctld.logTrace(string.format("_zoneDetails=%s", ctld.p(_zoneDetails)))
 
         local _triggerZone = trigger.misc.getZone(_zoneDetails[1])
 
@@ -4504,7 +4452,6 @@ function ctld.inPickupZone(_heli)
             --get distance to center
 
             local _dist = ctld.getDistance(_heliPoint, _triggerZone.point)
-            ctld.logTrace(string.format("_dist=%s", ctld.p(_dist)))
             if _dist <= _triggerZone.radius then
                 local _heliCoalition = _heli:getCoalition()
                 if _zoneDetails[4] == 1 and (_zoneDetails[5] == _heliCoalition or _zoneDetails[5] == 0) then
@@ -4933,9 +4880,7 @@ function ctld.addF10MenuOptions()
 
                             -- local _loadPath = missionCommands.addSubMenuForGroup(_groupId, "Load From Zone", _troopCommandsPath)
                             local _transportLimit = ctld.getTransportLimit(_unit:getTypeName())
-                            ctld.logTrace(string.format("_transportLimit=%s", ctld.p(_transportLimit)))
                             for _,_loadGroup in pairs(ctld.loadableGroups) do
-                                ctld.logTrace(string.format("_loadGroup=%s", ctld.p(_loadGroup)))
                                 if not _loadGroup.side or _loadGroup.side == _unit:getCoalition() then
 
                                     -- check size & unit
@@ -5099,17 +5044,17 @@ function ctld.addRadioListCommand(_side)
 end
 
 function ctld.addJTACRadioCommand(_side)
-
+    
     local _players = coalition.getPlayers(_side)
-
+    
     if _players ~= nil then
-
+        
         for _, _playerUnit in pairs(_players) do
-
+            
             local _groupId = ctld.getGroupId(_playerUnit)
-
+            
             if _groupId then
-
+                
                 local newGroup = false
                 --   env.info("adding command for "..index)
                 if ctld.jtacRadioAdded[tostring(_groupId)] == nil then
@@ -5120,15 +5065,15 @@ function ctld.addJTACRadioCommand(_side)
                     ctld.jtacRadioAdded[tostring(_groupId)] = true
                     -- env.info("Added command for " .. index)
                 end
-
+                
                 --fetch the time to check for a regular refresh
                 local time = timer.getTime()
-
+                
                 --depending on the delay, this part of the radio menu will be refreshed less often or as often as the static JTAC status command, this is for better reliability for the user when navigating through the menus. New groups will get the lists regardless and if a new JTAC is added all lists will be refreshed regardless of the delay.
                 if ctld.jtacLastRadioRefresh + ctld.jtacRadioRefreshDelay <= time or ctld.newJtac[_side] or newGroup then
-
+                    
                     ctld.jtacLastRadioRefresh = time
-
+                    
                     --build the path to the CTLD JTAC menu
                     local jtacCurrentPagePath = {[1]=ctld.jtacMenuName}
                     --build the path for the NextPage submenu on the first page of the CTLD JTAC menu
@@ -5136,48 +5081,48 @@ function ctld.addJTACRadioCommand(_side)
                     local MainNextPagePath = {[1]=ctld.jtacMenuName, [2]=NextPageText}
                     --remove it along with everything that's in it
                     missionCommands.removeItemForGroup(_groupId, MainNextPagePath)
-
+                    
                     --counter to know when to add the next page submenu to fit all of the JTAC group submenus
                     local jtacCounter = 0
-                
+                    
                     for _jtacGroupName,jtacUnit in pairs(ctld.jtacUnits) do
-
-                        local jtacCoalition = ctld.jtacUnits[_jtacGroupName].side
+                        ctld.logTrace(string.format("JTAC - MENU - [%s] - processing menu", ctld.p(_jtacGroupName)))
+                        
                         --if the JTAC is on the same team as the group being considered
+                        local jtacCoalition = ctld.jtacUnits[_jtacGroupName].side
                         if jtacCoalition and jtacCoalition == _side then
                             --only bother removing the submenus on the first page of the CTLD JTAC menu as the other pages were deleted entirely above
                             if ctld.jtacGroupSubMenuPath[_jtacGroupName] and #ctld.jtacGroupSubMenuPath[_jtacGroupName]==2 then
                                 missionCommands.removeItemForGroup(_groupId, ctld.jtacGroupSubMenuPath[_jtacGroupName])
                             end
-
-                            ctld.logTrace(string.format("jtacTargetsList for %s is : %s", ctld.p(_jtacGroupName), ctld.p(ctld.jtacTargetsList[_jtacGroupName])))
-
+                            ctld.logTrace(string.format("JTAC - MENU - [%s] - jtacTargetsList = %s", ctld.p(_jtacGroupName), ctld.p(ctld.jtacTargetsList[_jtacGroupName])))
+                            ctld.logTrace(string.format("JTAC - MENU - [%s] - jtacCurrentTargets = %s", ctld.p(_jtacGroupName), ctld.p(ctld.jtacCurrentTargets[_jtacGroupName])))
+                            
                             --if JTAC has at least one target in sight (if it has only one, it'll already be designated, this menu is then simply to access special options for the JTAC like wind/target speed compensation)
                             if ctld.jtacCurrentTargets[_jtacGroupName] then
-
+                                
                                 local jtacGroupSubMenuName = string.format(_jtacGroupName .. " Selection")
-
+                                
                                 jtacCounter = jtacCounter + 1
                                 --F2 through F10 makes 9 entries possible per page, with one being the NextMenu submenu. F1 is taken by JTAC status entry.
-                                if jtacCounter%9 == 0 then
+                                if jtacCounter % 9 == 0 then
                                     --recover the path to the current page with space available for JTAC group submenus
                                     jtacCurrentPagePath = missionCommands.addSubMenuForGroup(_groupId, NextPageText, jtacCurrentPagePath)
                                 end
                                 --add the JTAC group submenu to the current page
                                 ctld.jtacGroupSubMenuPath[_jtacGroupName] = missionCommands.addSubMenuForGroup(_groupId, jtacGroupSubMenuName, jtacCurrentPagePath)
-
-                                ctld.logTrace(string.format("jtacGroupSubMenuPath for %s is : %s", ctld.p(_jtacGroupName), ctld.p(ctld.jtacGroupSubMenuPath[_jtacGroupName])))
-
+                                ctld.logTrace(string.format("JTAC - MENU - [%s] - jtacGroupSubMenuPath = %s", ctld.p(_jtacGroupName), ctld.p(ctld.jtacGroupSubMenuPath[_jtacGroupName])))
+                                
                                 --make a copy of the JTAC group submenu's path to insert the target's list on as many pages as required. The JTAC's group submenu path only leads to the first page
                                 local jtacTargetPagePath = mist.utils.deepCopy(ctld.jtacGroupSubMenuPath[_jtacGroupName])
                                 
                                 --counter to know when to add the next page submenu to fit all of the targets in the JTAC's group submenu. SMay not actually start at 0 due to static items being present on the first page
                                 local itemCounter = 0
                                 local jtacSpecialOptPagePath = nil
-
+                                
                                 --special options
                                 local SpecialOptionsCounter = 0
-
+                                
                                 for _,_specialOption in pairs(ctld.jtacSpecialOptions) do
                                     if _specialOption.globalToggle then 
                                         
@@ -5185,14 +5130,14 @@ function ctld.addJTACRadioCommand(_side)
                                             itemCounter = itemCounter + 1 --one item is added to the first JTAC target page
                                             jtacSpecialOptPagePath = missionCommands.addSubMenuForGroup(_groupId, "Actions", jtacTargetPagePath)
                                         end
-
+                                        
                                         SpecialOptionsCounter = SpecialOptionsCounter+1
-
+                                        
                                         if SpecialOptionsCounter%10 == 0 then
                                             jtacSpecialOptPagePath = missionCommands.addSubMenuForGroup(_groupId, NextPageText, jtacSpecialOptPagePath)
                                             SpecialOptionsCounter = SpecialOptionsCounter+1 --Added Next Page item
                                         end
-
+                                        
                                         if _specialOption.jtacs then
                                             if _specialOption.jtacs[_jtacGroupName] then
                                                 missionCommands.addCommandForGroup(_groupId, "DISABLE " ..  _specialOption.message, jtacSpecialOptPagePath, _specialOption.setter, {jtacGroupName = _jtacGroupName, value = false})
@@ -5204,46 +5149,48 @@ function ctld.addJTACRadioCommand(_side)
                                         end
                                     end
                                 end
-
+                                
                                 if #ctld.jtacTargetsList[_jtacGroupName] > 1 then
+                                    ctld.logTrace(string.format("JTAC - MENU - [%s] - adding targets menu", ctld.p(_jtacGroupName)))
+
+                                    --add a reset targeting option to revert to automatic JTAC unit targeting
+                                    missionCommands.addCommandForGroup(_groupId, "Reset TGT Selection", jtacTargetPagePath, ctld.setJTACTarget, {jtacGroupName = _jtacGroupName, targetName = nil})
                                     
-                                --add a reset targeting option to revert to automatic JTAC unit targeting
-                                missionCommands.addCommandForGroup(_groupId, "Reset TGT Selection", jtacTargetPagePath, ctld.setJTACTarget, {jtacGroupName = _jtacGroupName, targetName = nil})
-
                                     itemCounter = itemCounter + 1 --one item is added to the first JTAC target page
-
-                                --indicator table to know which unitType was already added to the radio submenu
-                                local typeNameList = {}
-                                for _,target in pairs(ctld.jtacTargetsList[_jtacGroupName]) do
-                                    local targetName = target.unit:getName()
-                                    --check if the jtac has a current target before filtering it out if possible
-                                    if (ctld.jtacCurrentTargets[_jtacGroupName] and targetName ~= ctld.jtacCurrentTargets[_jtacGroupName].name) then
-                                        local targetType_name = target.unit:getTypeName()
-
-                                        if targetType_name then
+                                    
+                                    --indicator table to know which unitType was already added to the radio submenu
+                                    local typeNameList = {}
+                                    for _,target in pairs(ctld.jtacTargetsList[_jtacGroupName]) do
+                                        local targetName = target.unit:getName()
+                                        --check if the jtac has a current target before filtering it out if possible
+                                        if (ctld.jtacCurrentTargets[_jtacGroupName] and targetName ~= ctld.jtacCurrentTargets[_jtacGroupName].name) then
+                                            local targetType_name = target.unit:getTypeName()
+                                            
+                                            if targetType_name then
                                                 if typeNameList[targetType_name] then
                                                     typeNameList[targetType_name].amount = typeNameList[targetType_name].amount + 1
-                                            else
+                                                else
                                                     typeNameList[targetType_name] = {}
                                                     typeNameList[targetType_name].targetName = targetName --store the first targetName
                                                     typeNameList[targetType_name].amount = 1
+                                                end
                                             end
                                         end
                                     end
-                                end
-
-                                for typeName,info in pairs(typeNameList) do
-                                    local amount = info.amount
-                                    local targetName = info.targetName
-                                    itemCounter = itemCounter + 1
-
+                                    
+                                    for typeName,info in pairs(typeNameList) do
+                                        local amount = info.amount
+                                        local targetName = info.targetName
+                                        itemCounter = itemCounter + 1
+                                        
                                         --F1 through F10 makes 10 entries possible per page, with one being the NextMenu submenu.
                                         if itemCounter%10 == 0 then
-                                        jtacTargetPagePath = missionCommands.addSubMenuForGroup(_groupId, NextPageText, jtacTargetPagePath)
+                                            jtacTargetPagePath = missionCommands.addSubMenuForGroup(_groupId, NextPageText, jtacTargetPagePath)
                                             itemCounter = itemCounter + 1 --added the next page item
+                                        end
+                                        
+                                        missionCommands.addCommandForGroup(_groupId, string.format(typeName .. "(" .. amount .. ")"), jtacTargetPagePath, ctld.setJTACTarget, {jtacGroupName = _jtacGroupName, targetName = targetName})
                                     end
-
-                                    missionCommands.addCommandForGroup(_groupId, string.format(typeName .. "(" .. amount .. ")"), jtacTargetPagePath, ctld.setJTACTarget, {jtacGroupName = _jtacGroupName, targetName = targetName})
                                 end
                             end
                         end
@@ -5251,8 +5198,7 @@ function ctld.addJTACRadioCommand(_side)
                 end
             end
         end
-        end
-
+        
         if ctld.newJtac[_side] then
             ctld.newJtac[_side] = false
         end
@@ -5384,7 +5330,7 @@ function ctld.JTACAutoLase(_jtacGroupName, _laserCode, _smoke, _lock, _colour, _
                         --jtac soldier being transported by heli
                         ctld.cleanupJTAC(_jtacGroupName)
 
-                        env.info(_jtacGroupName .. ' in Transport - Waiting 10 seconds')
+                        ctld.logTrace(string.format("JTAC - LASE - [%s] - in transport, waiting - scheduling JTACAutoLase in %ss at %s", ctld.p(_jtacGroupName), ctld.p(10), ctld.p(timer.getTime() + 10)))
                         timer.scheduleFunction(ctld.timerJTACAutoLase, { _jtacGroupName, _laserCode, _smoke, _lock, _colour, _radio }, timer.getTime() + 10)
                         return
                     end
@@ -5393,7 +5339,7 @@ function ctld.JTACAutoLase(_jtacGroupName, _laserCode, _smoke, _lock, _colour, _
                         --jtac vehicle being transported by heli
                         ctld.cleanupJTAC(_jtacGroupName)
 
-                        env.info(_jtacGroupName .. ' in Transport - Waiting 10 seconds')
+                        ctld.logTrace(string.format("JTAC - LASE - [%s] - in transport, waiting - scheduling JTACAutoLase in %ss at %s", ctld.p(_jtacGroupName), ctld.p(10), ctld.p(timer.getTime() + 10)))
                         timer.scheduleFunction(ctld.timerJTACAutoLase, { _jtacGroupName, _laserCode, _smoke, _lock, _colour, _radio }, timer.getTime() + 10)
                         return
                     end
@@ -5419,7 +5365,7 @@ function ctld.JTACAutoLase(_jtacGroupName, _laserCode, _smoke, _lock, _colour, _
         --Targets list, special options and Selected target initialization
         if not ctld.jtacTargetsList[_jtacGroupName] then
             --Target list
-                        ctld.jtacTargetsList[_jtacGroupName] = {}
+            ctld.jtacTargetsList[_jtacGroupName] = {}
             if _jtacCoalition then ctld.newJtac[_jtacCoalition] = true end
 
             --Special Options
@@ -5462,7 +5408,7 @@ function ctld.JTACAutoLase(_jtacGroupName, _laserCode, _smoke, _lock, _colour, _
 
         ctld.cleanupJTAC(_jtacGroupName)
 
-        env.info(_jtacGroupName .. ' Not Active - Waiting 30 seconds')
+        ctld.logTrace(string.format("JTAC - LASE - [%s] - not active, scheduling JTACAutoLase in 30s at %s", ctld.p(_jtacGroupName), ctld.p(timer.getTime() + 30)))
         timer.scheduleFunction(ctld.timerJTACAutoLase, { _jtacGroupName, _laserCode, _smoke, _lock, _colour, _radio }, timer.getTime() + 30)
 
         return
@@ -5585,24 +5531,24 @@ function ctld.JTACAutoLase(_jtacGroupName, _laserCode, _smoke, _lock, _colour, _
         local targetSpeedVec = _enemyUnit:getVelocity()
         local targetSpeed = math.sqrt(targetSpeedVec.x^2+targetSpeedVec.y^2+targetSpeedVec.z^2)
         local maxUpdateDist = 5 --maximum distance the unit will be allowed to travel before the lase spot is updated again
-        ctld.logDebug(string.format("targetSpeed=%s", ctld.p(targetSpeed)))
+        ctld.logTrace(string.format("targetSpeed=%s", ctld.p(targetSpeed)))
 
         ctld.laseUnit(_enemyUnit, _jtacUnit, _jtacGroupName, _laserCode)
 
         --if the target is going sufficiently fast for it to wander off futher than the maxUpdateDist, schedule laseUnit calls to update the lase spot only (we consider that the unit lives and drives on between JTACAutoLase calls)
         if targetSpeed >= maxUpdateDist/refreshDelay then
             local updateTimeStep = maxUpdateDist/targetSpeed --calculate the time step so that the target is never more than maxUpdateDist from it's last lased position
-            ctld.logDebug(string.format("updateTimeStep=%s", ctld.p(updateTimeStep)))
-
+            ctld.logTrace(string.format("JTAC - LASE - [%s] - target is moving at %s m/s, schedulting lasing steps every %ss", ctld.p(_jtacGroupName), ctld.p(targetSpeed), ctld.p(updateTimeStep)))
+            
             local i = 1
             while i*updateTimeStep <= refreshDelay - updateTimeStep do --while the scheduled time for the laseUnit call isn't greater than the time between two JTACAutoLase() calls minus one time step (because at the next time step JTACAutoLase() should have been called and this in term also calls laseUnit())
-                ctld.logTrace("ctld.laseUnit scheduled " .. i)
                 timer.scheduleFunction(ctld.timerLaseUnit,{_enemyUnit, _jtacUnit, _jtacGroupName, _laserCode}, timer.getTime()+i*updateTimeStep)
                 i = i + 1
             end
+            ctld.logTrace(string.format("JTAC - LASE - [%s] - scheduled %s moving target lasing steps", ctld.p(_jtacGroupName), ctld.p(i)))
         end
 
-        --   env.info('Timer timerSparkleLase '..jtacGroupName.." "..laserCode.." "..enemyUnit:getName())
+        ctld.logTrace(string.format("JTAC - LASE - [%s] - scheduling JTACAutoLase in %ss at %s", ctld.p(_jtacGroupName), ctld.p(refreshDelay), ctld.p(timer.getTime() + refreshDelay)))
         timer.scheduleFunction(ctld.timerJTACAutoLase, { _jtacGroupName, _laserCode, _smoke, _lock, _colour, _radio }, timer.getTime() + refreshDelay)
 
         if _smoke == true then
@@ -5616,12 +5562,13 @@ function ctld.JTACAutoLase(_jtacGroupName, _laserCode, _smoke, _lock, _colour, _
         end
 
     else
-        -- env.info('LASE: No Enemies Nearby / Standby mode')
+        ctld.logDebug(string.format("JTAC - MODE - [%s] - No Enemies Nearby / Standby mode", ctld.p(_jtacGroupName)))
 
         -- stop lazing the old spot
+        ctld.logDebug(string.format("JTAC - LASE - [%s] - canceling lasing of the old spot", ctld.p(_jtacGroupName)))
         ctld.cancelLase(_jtacGroupName)
-        --  env.info('Timer Slow timerSparkleLase '..jtacGroupName.." "..laserCode.." "..enemyUnit:getName())
 
+        ctld.logTrace(string.format("JTAC - LASE - [%s] - scheduling JTACAutoLase in %ss at %s", ctld.p(_jtacGroupName), ctld.p(5), ctld.p(timer.getTime() + 5)))
         timer.scheduleFunction(ctld.timerJTACAutoLase, { _jtacGroupName, _laserCode, _smoke, _lock, _colour, _radio }, timer.getTime() + 5)
     end
 
@@ -5692,8 +5639,6 @@ end
 --- send a message to the coalition
 --- if _radio is set, the message will be read out loud via SRS
 function ctld.notifyCoalition(_message, _displayFor, _side, _radio, _shortMessage)
-    ctld.logDebug(string.format("ctld.notifyCoalition(_message=%s)", ctld.p(_message)))
-    ctld.logTrace(string.format("_radio=%s", ctld.p(_radio)))
 
     local _shortMessage = _shortMessage
     if _shortMessage == nil then 
@@ -5709,15 +5654,6 @@ function ctld.notifyCoalition(_message, _displayFor, _side, _radio, _shortMessag
         local _culture = _radio.culture or "en-US"
         local _voice = _radio.voice
         local _googleTTS = _radio.googleTTS or false
-        ctld.logTrace(string.format("calling STTS.TextToSpeech(%s)", ctld.p(_shortMessage)))
-        ctld.logTrace(string.format("_freq=%s", ctld.p(_freq)))
-        ctld.logTrace(string.format("_modulation=%s", ctld.p(_modulation)))
-        ctld.logTrace(string.format("_volume=%s", ctld.p(_volume)))
-        ctld.logTrace(string.format("_name=%s", ctld.p(_name)))
-        ctld.logTrace(string.format("_gender=%s", ctld.p(_gender)))
-        ctld.logTrace(string.format("_culture=%s", ctld.p(_culture)))
-        ctld.logTrace(string.format("_voice=%s", ctld.p(_voice)))
-        ctld.logTrace(string.format("_googleTTS=%s", ctld.p(_googleTTS)))
         STTS.TextToSpeech(_shortMessage, _freq, _modulation, _volume, _name, _side, nil, 1, _gender, _culture, _voice, _googleTTS)
     end
 

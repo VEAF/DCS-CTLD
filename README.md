@@ -101,6 +101,20 @@ You can also edit the CTLD.lua file to change some configuration options. Make s
 
 ## Setup in Mission Editor
 
+### Test mission
+
+You can use the `test-mission.miz` mission as a demonstration on how to use the CTLD script in a DCS mission.
+
+This mission includes the CTLD script, a proper configuration, demonstration for some of the main features (including the "JTAC talk over the radio via SRS" functionality).
+
+**Note to developers**: it's quite easy to set the loading of the CTLD script to dynamic, so you can make changes to the script, save it and simply reload the mission (left-shift + R) in the game to test the edits you made.
+
+To do this, simply change the "Define loading mode" trigger (1) so that the condition reads "FLAG IS FALSE" (2), and edit the "DO SCRIPT" action (3) to replace the path with the path to the `CTLD.lua` file on your PC.
+
+Optionaly, you can disable the STTS (text to speech over SRS) feature (4).
+
+![dynamic_loading]
+
 ### Script Setup
 **This script requires MIST version 4.0.57 or above: https://github.com/mrSkortch/MissionScriptingTools**
 
@@ -1045,3 +1059,5 @@ Below is a complete list of all the "actions" plus the data that is sent through
 * ```{unit = "Unit that did the action",crate = "Crate Details", spawnedGroup = "Group rearmed by crate", action = "rearm"}```
 * ```{unit = "Unit that did the action",crate = "Crate Details", spawnedGroup = "Group spawned by crate", action = "unpack"}```
 * ```{unit = "Unit that did the action",crate = "Crate Details", spawnedGroup = "Group repaired by crate", action = "repair"}```
+
+[dynamic_loading]: trigger-dynamic-loading.png
