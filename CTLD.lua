@@ -5725,7 +5725,7 @@ function ctld.laseUnit(_enemyUnit, _jtacUnit, _jtacGroupName, _laserCode)
         local _enemyVector = _enemyUnit:getPoint()
         local _enemyVectorUpdated = { x = _enemyVector.x, y = _enemyVector.y + 2.0, z = _enemyVector.z }
 
-        if ctld.jtacSpecialOptions.laseSpotCorrections[_jtacGroupName] then
+        if ctld.jtacSpecialOptions.laseSpotCorrections.jtacs[_jtacGroupName] then
             local _enemySpeedVector = _enemyUnit:getVelocity()
             ctld.logTrace(string.format("_enemySpeedVector=%s", ctld.p(_enemySpeedVector)))
 
