@@ -3837,6 +3837,7 @@ function ctld.unpackAASystem(_heli, _nearestCrate, _nearbyCrates,_aaSystemTempla
     --initialise list of parts
     for _,_part in pairs(_aaSystemTemplate.parts) do
         local _systemPart = {name = _part.name, desc = _part.desc, launcher = _part.launcher, amount = _part.amount, NoCrate = _part.NoCrate, found = 0, required = 1}
+        -- if the part is a NoCrate required, it's found by default
         if _systemPart.NoCrate ~= nil then
             _systemPart.found = 1
         end
@@ -3858,12 +3859,14 @@ function ctld.unpackAASystem(_heli, _nearestCrate, _nearbyCrates,_aaSystemTempla
 
                 local foundCount = _systemParts[_name].found
 
+                -- if this is our first time encountering this part of the system
                 if foundCount == 0 then
                     local _foundPart = _systemParts[_name]
 
                     _foundPart.found = 1
                     _foundPart.crates = {}
 
+                    -- store the number of crates required to compute how many crates will have to be removed later and to see if the system can be deployed
                     local cratesRequired = _nearbyCrate.details.cratesRequired
                     if  cratesRequired ~= nil then
                         _foundPart.required = cratesRequired
@@ -3873,9 +3876,11 @@ function ctld.unpackAASystem(_heli, _nearestCrate, _nearbyCrates,_aaSystemTempla
                     _cratePositions[_name] = {}
                     _crateHdg[_name] = {}
                 else
+                    -- otherwise, we found another crate for the same part
                     _systemParts[_name].found = foundCount + 1
                 end
 
+                -- add the crate to the part info along with it's position and heading
                 local crateUnit = _nearbyCrate.crateUnit
                 table.insert(_systemParts[_name].crates, _nearbyCrate)
                 table.insert(_cratePositions[_name], crateUnit:getPoint())
@@ -3884,6 +3889,7 @@ function ctld.unpackAASystem(_heli, _nearestCrate, _nearbyCrates,_aaSystemTempla
         end
     end
 
+    -- Compute the centroids for each type of crates and then the centroid of all the system crates which is used to find the spawn location for each part and a position for the NoCrate parts respectively
     -- One issue, all crates are considered for the centroid and the headings but not all of them may be used if crate stacking is allowed
     local _crateCentroids = {}
     local _idxCentroids = {}
@@ -3893,16 +3899,19 @@ function ctld.unpackAASystem(_heli, _nearestCrate, _nearbyCrates,_aaSystemTempla
     end
     local _crateCentroid = ctld.getCentroid(_idxCentroids)
 
+    -- Compute the average heading for each type of crates to know the heading to spawn the part
     local _aveHdg = {}
+    -- Headings of each group of crates
     for _partName, _crateHeadings in pairs(_crateHdg) do
         local crateCount = #_crateHeadings
         _aveHdg[_partName] = 0
+        -- Heading of each crate within a group
         for _index, _crateHeading in pairs(_crateHeadings) do
             _aveHdg[_partName] = _crateHeading / crateCount + _aveHdg[_partName]
         end
     end
 
-    local spawnDistance = 20
+    local spawnDistance = 20 -- circle diameter to spawn units in a circle and randomize position relative to the crate location
     local arcRad = math.pi * 2
 
     local _txt = ""
@@ -3910,34 +3919,43 @@ function ctld.unpackAASystem(_heli, _nearestCrate, _nearbyCrates,_aaSystemTempla
     local _posArray = {}
     local _hdgArray = {}
     local _typeArray = {}
+    -- for each part of the system parts
     for _name, _systemPart in pairs(_systemParts) do
 
+        -- check if enough crates were found to build the part
         if _systemPart.found < _systemPart.required then
             _txt = _txt.."Missing ".._systemPart.desc.."\n"
         else
+            -- use the centroid of the crates for this part as a spawn location
             local _point = _crateCentroids[_name]
+            -- in the case this centroid does not exist (NoCrate), use the centroid of all crates found and add some randomness
             if _point == nil then
                 _point = _crateCentroid
                 _point = { x = _point.x + math.random(0,3)*spawnDistance, y = _point.y, z = _point.z + math.random(0,3)*spawnDistance}
             end
 
+            -- use the average heading to spawn the part at
             local _hdg = _aveHdg[_name]
+            -- if non are found (NoCrate), random heading
             if _hdg == nil then
                 _hdg = math.random(0, arcRad)
             end
 
+            -- search for the amount of times this part needs to be spawned, by default 1 for any unit and aaLaunchers for launchers
             local partAmount = 1
-            if ctld.AASystemCrateStacking then
-                 _systemPart.amountFactor = _systemPart.found - _systemPart.found%_systemPart.required
-            else
-                _systemPart.amountFactor = 1
-            end
             if _systemPart.amount == nil then
                 if _systemPart.launcher ~= nil then
                     partAmount = ctld.aaLaunchers
                 end
             else
+                -- but the amount may also be specified in the template
                 partAmount = _systemPart.amount
+            end
+            -- if crate stacking is allowed, then find the multiplication factor for the amount depending on how many crates are required and how many were found
+            if ctld.AASystemCrateStacking then
+                _systemPart.amountFactor = _systemPart.found - _systemPart.found%_systemPart.required
+            else
+                _systemPart.amountFactor = 1
             end
             partAmount = partAmount * _systemPart.amountFactor
 
@@ -3952,7 +3970,7 @@ function ctld.unpackAASystem(_heli, _nearestCrate, _nearbyCrates,_aaSystemTempla
                     local _yOffset = math.sin(_angle) * spawnDistance
 
                     table.insert(_posArray, { x = _point.x + _xOffset, y = _point.y, z = _point.z + _yOffset })
-                    table.insert(_hdgArray, _angle)
+                    table.insert(_hdgArray, _angle) -- also spawn them perpendicular to that point of the circle
                     table.insert(_typeArray, _name)
                 end
             else
@@ -3981,11 +3999,15 @@ function ctld.unpackAASystem(_heli, _nearestCrate, _nearbyCrates,_aaSystemTempla
 
         -- destroy crates
         for _name, _systemPart in pairs(_systemParts) do
+            -- if there is a crate to delete in the first place
             if  _systemPart.NoCrate ~= true then
+                -- figure out how many crates to delete since we searched for as many as possible, not all of them might have been used
                 local amountToDel = _systemPart.amountFactor*_systemPart.required
                 local DelCounter = 0
 
+                -- for each crate found for this part
                 for _index, _crate in pairs(_systemPart.crates) do
+                    -- if we still need to delete some crates
                     if DelCounter < amountToDel then
                         if _heli:getCoalition() == 1 then
                             ctld.spawnedCratesRED[_crate.crateUnit:getName()] = nil
@@ -3996,7 +4018,7 @@ function ctld.unpackAASystem(_heli, _nearestCrate, _nearbyCrates,_aaSystemTempla
                         --destroy
                         -- if ctld.slingLoad == false then
                             _crate.crateUnit:destroy()
-                            DelCounter = DelCounter + 1
+                            DelCounter = DelCounter + 1 -- count up for one more crate has been deleted
                         --end
                     else
                         break
