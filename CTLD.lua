@@ -26,7 +26,7 @@ ctld = {} -- DONT REMOVE!
 ctld.Id = "CTLD - "
 
 --- Version.
-ctld.Version = "202310.02"
+ctld.Version = "202312.27"
 
 -- To add debugging messages to dcs.log, change the following log levels to `true`; `Debug` is less detailed than `Trace`
 ctld.Debug = false
@@ -123,6 +123,11 @@ ctld.hoverTime = 10 -- Time to hold hover above a crate for loading in seconds
 ctld.AASystemLimitRED = 20 -- Red side limit
 
 ctld.AASystemLimitBLUE = 20 -- Blue side limit
+
+-- Allows players to create systems using as many crates as they like
+-- Example : an amount X of patriot launcher crates allows for Y launchers to be deployed, if a player brings 2*X+Z crates (Z being lower then X), then deploys the patriot site, 2*Y launchers will be in the group and Z launcher crate will be left over
+
+ctld.AASystemCrateStacking = false
 
 --END AA SYSTEM CONFIG --
 
@@ -3852,36 +3857,34 @@ function ctld.unpackAASystem(_heli, _nearestCrate, _nearbyCrates,_aaSystemTempla
             if _systemParts[_name] ~= nil then
 
                 local foundCount = _systemParts[_name].found
-                local requiredCount = _systemParts[_name].required
 
-                if foundCount < requiredCount then
-                    if foundCount == 0 then
-                        local _foundPart = _systemParts[_name]
+                if foundCount == 0 then
+                    local _foundPart = _systemParts[_name]
 
-                        _foundPart.found = 1
-                        _foundPart.crates = {}
+                    _foundPart.found = 1
+                    _foundPart.crates = {}
 
-                        local cratesRequired = _nearbyCrate.details.cratesRequired
-                        if  cratesRequired ~= nil then
-                            _foundPart.required = cratesRequired
-                        end
-
-                        _systemParts[_name] = _foundPart
-                        _cratePositions[_name] = {}
-                        _crateHdg[_name] = {}
-                    else
-                        _systemParts[_name].found = foundCount + 1
+                    local cratesRequired = _nearbyCrate.details.cratesRequired
+                    if  cratesRequired ~= nil then
+                        _foundPart.required = cratesRequired
                     end
 
-                    local crateUnit = _nearbyCrate.crateUnit
-                    table.insert(_systemParts[_name].crates, _nearbyCrate)
-                    table.insert(_cratePositions[_name], crateUnit:getPoint())
-                    table.insert(_crateHdg[_name], mist.getHeading(crateUnit))
+                    _systemParts[_name] = _foundPart
+                    _cratePositions[_name] = {}
+                    _crateHdg[_name] = {}
+                else
+                    _systemParts[_name].found = foundCount + 1
                 end
+
+                local crateUnit = _nearbyCrate.crateUnit
+                table.insert(_systemParts[_name].crates, _nearbyCrate)
+                table.insert(_cratePositions[_name], crateUnit:getPoint())
+                table.insert(_crateHdg[_name], mist.getHeading(crateUnit))
             end
         end
     end
 
+    -- One issue, all crates are considered for the centroid and the headings but not all of them may be used if crate stacking is allowed
     local _crateCentroids = {}
     local _idxCentroids = {}
     for _partName, _partPositions in pairs(_cratePositions) do
@@ -3924,6 +3927,11 @@ function ctld.unpackAASystem(_heli, _nearestCrate, _nearbyCrates,_aaSystemTempla
             end
 
             local partAmount = 1
+            if ctld.AASystemCrateStacking then
+                 _systemPart.amountFactor = _systemPart.found - _systemPart.found%_systemPart.required
+            else
+                _systemPart.amountFactor = 1
+            end
             if _systemPart.amount == nil then
                 if _systemPart.launcher ~= nil then
                     partAmount = ctld.aaLaunchers
@@ -3931,6 +3939,7 @@ function ctld.unpackAASystem(_heli, _nearestCrate, _nearbyCrates,_aaSystemTempla
             else
                 partAmount = _systemPart.amount
             end
+            partAmount = partAmount * _systemPart.amountFactor
 
             --handle multiple units per part by spawning them in a circle around the crate
             if partAmount > 1 then
@@ -3973,17 +3982,25 @@ function ctld.unpackAASystem(_heli, _nearestCrate, _nearbyCrates,_aaSystemTempla
         -- destroy crates
         for _name, _systemPart in pairs(_systemParts) do
             if  _systemPart.NoCrate ~= true then
-                for _index, _crate in pairs(_systemPart.crates) do
-                    if _heli:getCoalition() == 1 then
-                        ctld.spawnedCratesRED[_crate.crateUnit:getName()] = nil
-                    else
-                        ctld.spawnedCratesBLUE[_crate.crateUnit:getName()] = nil
-                    end
+                local amountToDel = _systemPart.amountFactor*_systemPart.required
+                local DelCounter = 0
 
-                    --destroy
-                    -- if ctld.slingLoad == false then
-                        _crate.crateUnit:destroy()
-                    --end
+                for _index, _crate in pairs(_systemPart.crates) do
+                    if DelCounter < amountToDel then
+                        if _heli:getCoalition() == 1 then
+                            ctld.spawnedCratesRED[_crate.crateUnit:getName()] = nil
+                        else
+                            ctld.spawnedCratesBLUE[_crate.crateUnit:getName()] = nil
+                        end
+
+                        --destroy
+                        -- if ctld.slingLoad == false then
+                            _crate.crateUnit:destroy()
+                            DelCounter = DelCounter + 1
+                        --end
+                    else
+                        break
+                    end
                 end
             end
         end
@@ -3996,7 +4013,6 @@ function ctld.unpackAASystem(_heli, _nearestCrate, _nearbyCrates,_aaSystemTempla
         ctld.processCallback({unit = _heli, crate = _nearestCrate , spawnedGroup = _spawnedGroup, action = "unpack"})
 
         trigger.action.outTextForCoalition(_heli:getCoalition(), ctld.getPlayerNameOrType(_heli) .. " successfully deployed a full ".._aaSystemTemplate.name.." to the field. \n\nAA Active System limit is: ".._allowed.."\nActive: "..(_activeLaunchers+1), 10)
-
     end
 end
 
