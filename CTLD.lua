@@ -574,7 +574,7 @@ ctld.spawnableCrates = {
     },
     ["AA long range"] = {
         -- Patriot System
-        { weight = 555, desc = "Patriot Launcher", unit = "Patriot ln", side = 2, crateRequired = 2},
+        { weight = 555, desc = "Patriot Launcher", unit = "Patriot ln", side = 2, cratesRequired = 2},
         { weight = 556, desc = "Patriot Radar", unit = "Patriot str" , side = 2 },
         { weight = 557, desc = "Patriot ECS", unit = "Patriot ECS", side = 2 },
         -- { weight = 553, desc = "Patriot ICC", unit = "Patriot cp", side = 2 },
