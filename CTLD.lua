@@ -5107,7 +5107,7 @@ function ctld.addJTACRadioCommand(_side)
                             end
 
                             --if JTAC has at least one other target in sight or (if special options are available (NOTE : accessed through the JTAC's own menu also) and the JTAC has at least one target)
-                            if (ctld.jtacTargetsList[_jtacGroupName] and #ctld.jtacTargetsList[_jtacGroupName] > 1) or (ctld.jtacCurrentTargets[_jtacGroupName] and jtacActionMenu) then
+                            if (ctld.jtacTargetsList[_jtacGroupName] and #ctld.jtacTargetsList[_jtacGroupName] >= 1) or (ctld.jtacCurrentTargets[_jtacGroupName] and jtacActionMenu) then
                                 
                                 local jtacGroupSubMenuName = string.format(_jtacGroupName .. " Selection")
                                 
@@ -6131,7 +6131,7 @@ function ctld.getJTACStatus(_args)
                     _message = _message.."Visual On: "
 
                     for _,_type in pairs(_list) do
-                        _message = _message.._type.." "
+                        _message = _message.._type..", "
                     end
                     _message = _message.."\n"
                 end
