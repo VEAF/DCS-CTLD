@@ -5276,7 +5276,7 @@ function ctld.addJTACRadioCommand(_side)
                                     end
                                 end
                                 
-                                if #ctld.jtacTargetsList[_jtacGroupName] > 1 then
+                                if #ctld.jtacTargetsList[_jtacGroupName] >= 1 then
                                     ctld.logTrace(string.format("JTAC - MENU - [%s] - adding targets menu", ctld.p(_jtacGroupName)))
 
                                     --add a reset targeting option to revert to automatic JTAC unit targeting
