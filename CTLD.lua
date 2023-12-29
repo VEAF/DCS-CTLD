@@ -26,11 +26,11 @@ ctld = {} -- DONT REMOVE!
 ctld.Id = "CTLD - "
 
 --- Version.
-ctld.Version = "202310.02"
+ctld.Version = "202312.01"
 
 -- To add debugging messages to dcs.log, change the following log levels to `true`; `Debug` is less detailed than `Trace`
-ctld.Debug = false
-ctld.Trace = false
+ctld.Debug = true
+ctld.Trace = true
 
 ctld.alreadyInitialized = false -- if true, ctld.initialize() will not run
 
@@ -5160,7 +5160,7 @@ function ctld.addJTACRadioCommand(_side)
                                     end
                                 end
                                 
-                                if #ctld.jtacTargetsList[_jtacGroupName] > 1 then
+                                if #ctld.jtacTargetsList[_jtacGroupName] >= 1 then
                                     ctld.logTrace(string.format("JTAC - MENU - [%s] - adding targets menu", ctld.p(_jtacGroupName)))
 
                                     --add a reset targeting option to revert to automatic JTAC unit targeting
