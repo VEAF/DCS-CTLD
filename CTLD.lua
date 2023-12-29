@@ -4233,12 +4233,16 @@ function ctld.spawnCrateGroup(_heli, _positions, _types, _hdg)
         hdg = _hdg
     end
 
+    local spreadMin = 2
+    local spreadMax = 5
+    local spreadMult = 2
+
     if #_positions == 1 then
 
         local _unitId = ctld.getNextUnitId()
         local _details = { type = _types[1], unitId = _unitId, name = string.format("Unpacked %s #%i", _types[1], _unitId) }
 
-        _group.units[1] = ctld.createUnit(_positions[1].x, _positions[1].z, hdg, _details)
+        _group.units[1] = ctld.createUnit(_positions[1].x + math.random(spreadMin,spreadMax)*spreadMult, _positions[1].z + math.random(spreadMin,spreadMax)*spreadMult, hdg, _details)
 
     else
         for _i, _pos in ipairs(_positions) do
@@ -4251,7 +4255,7 @@ function ctld.spawnCrateGroup(_heli, _positions, _types, _hdg)
             local _unitId = ctld.getNextUnitId()
             local _details = { type = _types[_i], unitId = _unitId, name = string.format("Unpacked %s #%i", _types[_i], _unitId) }
 
-            _group.units[_i] = ctld.createUnit(_pos.x, _pos.z, heading, _details)
+            _group.units[_i] = ctld.createUnit(_pos.x + math.random(spreadMin,spreadMax)*spreadMult, _pos.z + math.random(spreadMin,spreadMax)*spreadMult, heading, _details)
         end
     end
 
