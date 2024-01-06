@@ -26,11 +26,11 @@ ctld = {} -- DONT REMOVE!
 ctld.Id = "CTLD - "
 
 --- Version.
-ctld.Version = "202312.27"
+ctld.Version = "202401.0"
 
 -- To add debugging messages to dcs.log, change the following log levels to `true`; `Debug` is less detailed than `Trace`
-ctld.Debug = true
-ctld.Trace = true
+ctld.Debug = false
+ctld.Trace = false
 
 ctld.alreadyInitialized = false -- if true, ctld.initialize() will not run
 
@@ -1874,7 +1874,7 @@ function ctld.deployTroops(_heli, _troops)
                     if _onboard.troops.jtac or _droppedTroops:getName():lower():find("jtac") then
                         local _code = table.remove(ctld.jtacGeneratedLaserCodes, 1)
                         table.insert(ctld.jtacGeneratedLaserCodes, _code)
-                        ctld.JTACAutoLase(_droppedTroops:getName(), _code)
+                        ctld.JTACStart(_droppedTroops:getName(), _code)
                     end
 
                     if _heli:getCoalition() == 1 then
@@ -2731,7 +2731,6 @@ end
 --check each minute if the beacons' batteries have failed, and stop them accordingly
 --there's no more need to actually refresh the beacons, since we set "loop" to true.
 function ctld.refreshRadioBeacons()
-    ctld.logDebug("ctld.refreshRadioBeacons()")
 
     timer.scheduleFunction(ctld.refreshRadioBeacons, nil, timer.getTime() + 60)
 
@@ -3174,7 +3173,7 @@ function ctld.unpackCrates(_arguments)
                         --put to the end
                         table.insert(ctld.jtacGeneratedLaserCodes, _code)
 
-                        ctld.JTACAutoLase(_spawnedGroups:getName(), _code) --(_jtacGroupName, _laserCode, _smoke, _lock, _colour)
+                        ctld.JTACStart(_spawnedGroups:getName(), _code) --(_jtacGroupName, _laserCode, _smoke, _lock, _colour)
                     end
                 end
 
@@ -3356,7 +3355,6 @@ end
 -- one for VHF and one for UHF
 -- The units are set to to NOT engage
 function ctld.createRadioBeacon(_point, _coalition, _country, _name, _batteryTime, _isFOB)
-    ctld.logDebug(string.format("ctld.createRadioBeacon(_name=%s)", ctld.p(_name)))
 
     local _freq = ctld.generateADFFrequencies()
 
@@ -3384,9 +3382,6 @@ function ctld.createRadioBeacon(_point, _coalition, _country, _name, _batteryTim
 
     _freqsText = _freqsText .. " - " .. _latLngStr
 
-    ctld.logTrace(string.format("GEN UHF: %s", ctld.p(_freq.uhf)))
-    ctld.logTrace(string.format("GEN HF: %s", ctld.p(_freq.vhf)))
-    ctld.logTrace(string.format("GEN FM: %s", ctld.p(_freq.fm)))
 
     _freqsText = string.format("%.2f kHz - %.2f / %.2f MHz", _freq.vhf / 1000, _freq.uhf / 1000000, _freq.fm / 1000000)
 
@@ -3406,7 +3401,6 @@ function ctld.createRadioBeacon(_point, _coalition, _country, _name, _batteryTim
         coalition = _coalition,
     }
     
-    ctld.logDebug(string.format("calling ctld.updateRadioBeacon for beacon %s", ctld.p(_name)))
     ctld.updateRadioBeacon(_beaconDetails)
 
     table.insert(ctld.deployedRadioBeacons, _beaconDetails)
@@ -3449,7 +3443,6 @@ end
 
 
 function ctld.spawnRadioBeaconUnit(_point, _country, _name, _freqsText)
-    ctld.logDebug(string.format("ctld.spawnRadioBeaconUnit(_name=%s)", ctld.p(_name)))
 
     local _groupId = ctld.getNextGroupId()
 
@@ -3485,8 +3478,6 @@ function ctld.spawnRadioBeaconUnit(_point, _country, _name, _freqsText)
 end
 
 function ctld.updateRadioBeacon(_beaconDetails)
-    ctld.logDebug("ctld.updateRadioBeacon()")
-    ctld.logTrace(string.format("_beaconDetails=%s", ctld.p(_beaconDetails)))
 
     local _vhfGroup = Group.getByName(_beaconDetails.vhfGroup)
 
@@ -3497,17 +3488,14 @@ function ctld.updateRadioBeacon(_beaconDetails)
     local _radioLoop = {}
 
     if _vhfGroup ~= nil and _vhfGroup:getUnits() ~= nil and #_vhfGroup:getUnits() == 1 then
-        ctld.logTrace(string.format("_vhfGroup=%s", ctld.p(_vhfGroup)))
         table.insert(_radioLoop, { group = _vhfGroup, freq = _beaconDetails.vhf, silent = false, mode = 0 })
     end
 
     if _uhfGroup ~= nil and _uhfGroup:getUnits() ~= nil and #_uhfGroup:getUnits() == 1 then
-        ctld.logTrace(string.format("_uhfGroup=%s", ctld.p(_uhfGroup)))
         table.insert(_radioLoop, { group = _uhfGroup, freq = _beaconDetails.uhf, silent = true, mode = 0 })
     end
 
     if _fmGroup ~= nil and _fmGroup:getUnits() ~= nil and #_fmGroup:getUnits() == 1 then
-        ctld.logTrace(string.format("_fmGroup=%s", ctld.p(_fmGroup)))
         table.insert(_radioLoop, { group = _fmGroup, freq = _beaconDetails.fm, silent = false, mode = 1 })
     end
 
@@ -3515,19 +3503,15 @@ function ctld.updateRadioBeacon(_beaconDetails)
 
     if (_batLife <= 0 and _beaconDetails.battery ~= -1) or #_radioLoop ~= 3 then
         -- ran out of batteries
-        ctld.logDebug("ran out of batteries")
         if _vhfGroup ~= nil then
-            ctld.logTrace(string.format("stopping transmission of %s", ctld.p(_vhfGroup:getName())))
             trigger.action.stopRadioTransmission(_vhfGroup:getName())
             _vhfGroup:destroy()
         end
         if _uhfGroup ~= nil then
-            ctld.logTrace(string.format("stopping transmission of %s", ctld.p(_uhfGroup:getName())))
             trigger.action.stopRadioTransmission(_uhfGroup:getName())
             _uhfGroup:destroy()
         end
         if _fmGroup ~= nil then
-            ctld.logTrace(string.format("stopping transmission of %s", ctld.p(_fmGroup:getName())))
             trigger.action.stopRadioTransmission(_fmGroup:getName())
             _fmGroup:destroy()
         end
@@ -3553,7 +3537,6 @@ function ctld.updateRadioBeacon(_beaconDetails)
 
         _groupController:setOption(AI.Option.Ground.id.ROE, AI.Option.Ground.val.ROE.WEAPON_HOLD)
 
-        ctld.logTrace(string.format("stopping and restarting transmission of %s", ctld.p(_radio.group:getName())))
         
         -- stop the transmission at each call to the ctld.updateRadioBeacon method (default each minute)
         trigger.action.stopRadioTransmission(_radio.group:getName())
@@ -3652,17 +3635,14 @@ function ctld.removeRadioBeacon(_args)
             local _fmGroup = Group.getByName(_closetBeacon.fmGroup)
 
             if _vhfGroup ~= nil then
-                ctld.logTrace(string.format("stopping transmission of %s", ctld.p(_vhfGroup:getName())))
                 trigger.action.stopRadioTransmission(_vhfGroup:getName())
                 _vhfGroup:destroy()
             end
             if _uhfGroup ~= nil then
-                ctld.logTrace(string.format("stopping transmission of %s", ctld.p(_uhfGroup:getName())))
                 trigger.action.stopRadioTransmission(_uhfGroup:getName())
                 _uhfGroup:destroy()
             end
             if _fmGroup ~= nil then
-                ctld.logTrace(string.format("stopping transmission of %s", ctld.p(_fmGroup:getName())))
                 trigger.action.stopRadioTransmission(_fmGroup:getName())
                 _fmGroup:destroy()
             end
@@ -4983,7 +4963,6 @@ function ctld.addF10MenuOptions()
                         local _rootPath = missionCommands.addSubMenuForGroup(_groupId, "CTLD")
 
                         local _unitActions = ctld.getUnitActions(_unit:getTypeName())
-                        ctld.logTrace(string.format("_unitActions=%s", ctld.p(_unitActions)))
 
                         missionCommands.addCommandForGroup(_groupId, "Check Cargo", _rootPath, ctld.checkTroopStatus, { _unitName })
 
@@ -5172,14 +5151,11 @@ function ctld.addJTACRadioCommand(_side)
             if _groupId then
                 
                 local newGroup = false
-                --   env.info("adding command for "..index)
                 if ctld.jtacRadioAdded[tostring(_groupId)] == nil then
-                    -- env.info("about command for "..index)
                     newGroup = true
                     local JTACpath = missionCommands.addSubMenuForGroup(_groupId, ctld.jtacMenuName)
                     missionCommands.addCommandForGroup(_groupId, "JTAC Status", JTACpath, ctld.getJTACStatus, { _playerUnit:getName() })
                     ctld.jtacRadioAdded[tostring(_groupId)] = true
-                    -- env.info("Added command for " .. index)
                 end
                 
                 --fetch the time to check for a regular refresh
@@ -5202,7 +5178,7 @@ function ctld.addJTACRadioCommand(_side)
                     local jtacCounter = 0
                     
                     for _jtacGroupName,jtacUnit in pairs(ctld.jtacUnits) do
-                        ctld.logTrace(string.format("JTAC - MENU - [%s] - processing menu", ctld.p(_jtacGroupName)))
+                        --ctld.logTrace(string.format("JTAC - MENU - [%s] - processing menu", ctld.p(_jtacGroupName)))
                         
                         --if the JTAC is on the same team as the group being considered
                         local jtacCoalition = ctld.jtacUnits[_jtacGroupName].side
@@ -5211,8 +5187,8 @@ function ctld.addJTACRadioCommand(_side)
                             if ctld.jtacGroupSubMenuPath[_jtacGroupName] and #ctld.jtacGroupSubMenuPath[_jtacGroupName]==2 then
                                 missionCommands.removeItemForGroup(_groupId, ctld.jtacGroupSubMenuPath[_jtacGroupName])
                             end
-                            ctld.logTrace(string.format("JTAC - MENU - [%s] - jtacTargetsList = %s", ctld.p(_jtacGroupName), ctld.p(ctld.jtacTargetsList[_jtacGroupName])))
-                            ctld.logTrace(string.format("JTAC - MENU - [%s] - jtacCurrentTargets = %s", ctld.p(_jtacGroupName), ctld.p(ctld.jtacCurrentTargets[_jtacGroupName])))
+                            --ctld.logTrace(string.format("JTAC - MENU - [%s] - jtacTargetsList = %s", ctld.p(_jtacGroupName), ctld.p(ctld.jtacTargetsList[_jtacGroupName])))
+                            --ctld.logTrace(string.format("JTAC - MENU - [%s] - jtacCurrentTargets = %s", ctld.p(_jtacGroupName), ctld.p(ctld.jtacCurrentTargets[_jtacGroupName])))
                             
                             local jtacActionMenu = false
                             for _,_specialOptionTable in pairs(ctld.jtacSpecialOptions) do
@@ -5235,7 +5211,7 @@ function ctld.addJTACRadioCommand(_side)
                                 end
                                 --add the JTAC group submenu to the current page
                                 ctld.jtacGroupSubMenuPath[_jtacGroupName] = missionCommands.addSubMenuForGroup(_groupId, jtacGroupSubMenuName, jtacCurrentPagePath)
-                                ctld.logTrace(string.format("JTAC - MENU - [%s] - jtacGroupSubMenuPath = %s", ctld.p(_jtacGroupName), ctld.p(ctld.jtacGroupSubMenuPath[_jtacGroupName])))
+                                --ctld.logTrace(string.format("JTAC - MENU - [%s] - jtacGroupSubMenuPath = %s", ctld.p(_jtacGroupName), ctld.p(ctld.jtacGroupSubMenuPath[_jtacGroupName])))
                                 
                                 --make a copy of the JTAC group submenu's path to insert the target's list on as many pages as required. The JTAC's group submenu path only leads to the first page
                                 local jtacTargetPagePath = mist.utils.deepCopy(ctld.jtacGroupSubMenuPath[_jtacGroupName])
@@ -5277,7 +5253,7 @@ function ctld.addJTACRadioCommand(_side)
                                 end
                                 
                                 if #ctld.jtacTargetsList[_jtacGroupName] >= 1 then
-                                    ctld.logTrace(string.format("JTAC - MENU - [%s] - adding targets menu", ctld.p(_jtacGroupName)))
+                                    --ctld.logTrace(string.format("JTAC - MENU - [%s] - adding targets menu", ctld.p(_jtacGroupName)))
 
                                     --add a reset targeting option to revert to automatic JTAC unit targeting
                                     missionCommands.addCommandForGroup(_groupId, "Reset TGT Selection", jtacTargetPagePath, ctld.setJTACTarget, {jtacGroupName = _jtacGroupName, targetName = nil})
@@ -5403,6 +5379,18 @@ ctld.refreshJTACmenu = {} --indicator to know when a new JTAC is added to a coal
 ctld.jtacGeneratedLaserCodes = {} -- keeps track of generated codes, cycles when they run out
 ctld.jtacLaserPointCodes = {}
 ctld.jtacRadioData = {}
+
+--[[
+    Called when a new JTAC is spawned, it will wait one second for DCS to have time to fill the group with units, and then call ctld.JTACAutoLase.
+    
+    The goal here is to correct a bug: when a group is respawned (i.e. when any group with the name of a previously existing group is spawned), 
+    DCS spawns a group which exists (Group.getByName gets a valid table, and group:isExist returns true), but has no units (i.e. group:getUnits returns an empty table).
+    This causes JTACAutoLase to call cleanupJTAC because it does not find the JTAC unit, and the JTAC to be put out of the JTACAutoLase loop, and never processed again.
+    By waiting a bit, the group gets populated before JTACAutoLase is called, hence avoiding a trip to cleanupJTAC.
+]]
+function ctld.JTACStart(_jtacGroupName, _laserCode, _smoke, _lock, _colour, _radio)
+    mist.scheduleFunction(ctld.JTACAutoLase, {_jtacGroupName, _laserCode, _smoke, _lock, _colour, _radio}, timer.getTime()+1)
+end
 
 function ctld.JTACAutoLase(_jtacGroupName, _laserCode, _smoke, _lock, _colour, _radio)
     ctld.logDebug(string.format("ctld.JTACAutoLase(_jtacGroupName=%s, _laserCode=%s", ctld.p(_jtacGroupName), ctld.p(_laserCode)))
@@ -6145,19 +6133,25 @@ end
 
 function ctld.getGroup(groupName)
 
-    local _groupUnits = Group.getByName(groupName)
+    local _group = Group.getByName(groupName)
 
     local _filteredUnits = {} --contains alive units
     local _x = 1
 
-    if _groupUnits ~= nil and _groupUnits:isExist() then
-
-        _groupUnits = _groupUnits:getUnits()
+    if _group ~= nil then
+        ctld.logTrace(string.format("ctld.getGroup - %s - group ~= nil", ctld.p(groupName)))
+        if _group:isExist() then
+            ctld.logTrace(string.format("ctld.getGroup - %s - group:isExist()", ctld.p(groupName)))
+            local _groupUnits = _group:getUnits()
 
         if _groupUnits ~= nil and #_groupUnits > 0 then
+                ctld.logTrace(string.format("ctld.getGroup - %s - group has %s units", ctld.p(groupName), ctld.p(#_groupUnits)))
             for _x = 1, #_groupUnits do
                 if _groupUnits[_x]:getLife() > 0  then -- removed and _groupUnits[_x]:isExist() as isExist doesnt work on single units!
                 table.insert(_filteredUnits, _groupUnits[_x])
+                    else
+                        ctld.logTrace(string.format("ctld.getGroup - %s - dead unit %s", ctld.p(groupName), ctld.p(_groupUnits[_x]:getName())))
+                    end
                 end
             end
         end
