@@ -3891,7 +3891,7 @@ function ctld.unpackAASystem(_heli, _nearestCrate, _nearbyCrates,_aaSystemTempla
         end
     end
 
-    local spawnDistance = 20 -- circle diameter to spawn units in a circle and randomize position relative to the crate location
+    local spawnDistance = 75 -- circle diameter to spawn units in a circle and randomize position relative to the crate location
     local arcRad = math.pi * 2
 
     local _txt = ""
