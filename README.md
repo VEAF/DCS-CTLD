@@ -170,9 +170,6 @@ ctld.fastRopeMaximumHeight = 18.28 -- in meters which is 60 ft max fast rope (no
 ctld.vehiclesForTransportRED = { "BRDM-2", "BTR_D" } -- vehicles to load onto Il-76 - Alternatives {"Strela-1 9P31","BMP-1"}
 ctld.vehiclesForTransportBLUE = { "M1045 HMMWV TOW", "M1043 HMMWV Armament" } -- vehicles to load onto c130 - Alternatives {"M1128 Stryker MGS","M1097 Avenger"}
 
-ctld.aaLaunchers = 3 -- controls how many launchers to add to the kub/buk when its spawned.
-ctld.hawkLaunchers = 5 -- controls how many launchers to add to the hawk when its spawned.
-
 ctld.spawnRPGWithCoalition = true --spawns a friendly RPG unit with Coalition forces
 ctld.spawnStinger = false -- spawns a stinger / igla soldier with a group of 6 or more soldiers!
 
@@ -208,6 +205,9 @@ ctld.hoverTime = 10 -- Time to hold hover above a crate for loading in seconds
 -- end of Simulated Sling load configuration
 
 -- AA SYSTEM CONFIG --
+
+ctld.aaLaunchers = 3 -- controls the default amount of launchers to add to AA systems when one is spawned.
+
 -- Sets a limit on the number of active AA systems that can be built for RED.
 -- A system is counted as Active if its fully functional and has all parts
 -- If a system is partially destroyed, it no longer counts towards the total
@@ -218,11 +218,18 @@ ctld.AASystemLimitRED = 20 -- Red side limit
 
 ctld.AASystemLimitBLUE = 20 -- Blue side limit
 
+-- Allows players to create systems using as many crates as they like
+-- Example : an amount X of patriot launcher crates allows for Y launchers to be deployed, if a player brings 2*X+Z crates (Z being lower then X), then deploys the patriot site, 2*Y launchers will be in the group and Z launcher crate will be left over
+
+ctld.AASystemCrateStacking = false
+
 --END AA SYSTEM CONFIG --
 
 ```
 
-To change what units can be dropped from crates modify the spawnable crates section. An extra parameter, ```cratesRequired = NUMBER``` can be added so you need more than one crate to build a unit. This parameter cannot be used for the HAWK, BUK or KUB system as that is already broken into 3 crates. You can also specify the coalition side so RED and BLUE have different crates to drop. If the parameter is missing the crate will appear for both sides.
+To change what units can be dropped from crates modify the spawnable crates section. An extra parameter, ```cratesRequired = NUMBER``` can be added so you need more than one crate to build a unit. This parameter can also be used for AA systems to require more then one crate of each type. You can also specify the coalition side so RED and BLUE have different crates to drop. If the parameter is missing the crate will appear for both sides. 
+
+For AA systems, there are additionally templates, one per system, that can be edited in the code in order to control how many units are spawned for each crate, if a unit type requires a crate etc.
 
 ```--``` in lua means ignore this line :)
 
@@ -260,7 +267,7 @@ ctld.spawnableCrates = {
         { weight = 215, desc = "Igla", unit = "SA-18 Igla manpad", side = 1 },
 
         -- HAWK System
-          { weight = 1000, desc = "HAWK Launcher", unit = "Hawk ln", side = 2},
+          { weight = 1000, desc = "HAWK Launcher", unit = "Hawk ln", side = 2, cratesRequired = 2 },
           { weight = 1010, desc = "HAWK Search Radar", unit = "Hawk sr", side = 2 },
           { weight = 1020, desc = "HAWK Track Radar", unit = "Hawk tr", side = 2 },
           { weight = 1021, desc = "HAWK Repair", unit = "HAWK Repair" , side = 2 },
