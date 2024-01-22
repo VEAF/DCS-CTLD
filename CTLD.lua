@@ -3894,7 +3894,7 @@ function ctld.unpackAASystem(_heli, _nearestCrate, _nearbyCrates,_aaSystemTempla
         end
     end
 
-    local spawnDistance = 75 -- circle diameter to spawn units in a circle and randomize position relative to the crate location
+    local spawnDistance = 50 -- circle diameter to spawn units in a circle and randomize position relative to the crate location
     local arcRad = math.pi * 2
 
     local _txt = ""
@@ -3948,7 +3948,7 @@ function ctld.unpackAASystem(_heli, _nearestCrate, _nearbyCrates,_aaSystemTempla
                 local angular_step = arcRad / partAmount
 
                 for _i = 1, partAmount do
-                    local _angle = (angular_step * (_i - 1))%arcRad
+                    local _angle = (angular_step * (_i - 1) + _hdg)%arcRad
                     local _xOffset = math.cos(_angle) * spawnDistance
                     local _yOffset = math.sin(_angle) * spawnDistance
 
