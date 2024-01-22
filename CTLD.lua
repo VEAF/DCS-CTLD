@@ -1543,10 +1543,12 @@ function ctld.getTransportUnit(_unitName)
     return nil
 end
 
-function ctld.spawnCrateStatic(_country, _unitId, _point, _name, _weight,_side)
+function ctld.spawnCrateStatic(_country, _unitId, _point, _name, _weight,_side, _hdg)
 
     local _crate
     local _spawnedCrate
+
+    local hdg = _hdg or 0
 
     if ctld.staticBugWorkaround and ctld.slingLoad == false then
         local _groupId = ctld.getNextGroupId()
@@ -1563,7 +1565,7 @@ function ctld.spawnCrateStatic(_country, _unitId, _point, _name, _weight,_side)
             ["task"] = {},
         }
 
-        _group.units[1] = ctld.createUnit(_point.x , _point.z , 0, {type="UAZ-469",name=_name,unitId=_unitId})
+        _group.units[1] = ctld.createUnit(_point.x , _point.z , hdg, {type="UAZ-469",name=_name,unitId=_unitId})
 
         --switch to MIST
         _group.category = Group.Category.GROUND;
@@ -1589,7 +1591,7 @@ function ctld.spawnCrateStatic(_country, _unitId, _point, _name, _weight,_side)
         _crate["x"] = _point.x
         _crate["mass"] = _weight
         _crate["name"] = _name
-        _crate["heading"] = 0
+        _crate["heading"] = hdg
         _crate["country"] = _country
 
         mist.dynAddStatic(_crate)
@@ -3348,7 +3350,7 @@ function ctld.dropSlingCrate(_args)
         --remove crate from cargo
         ctld.inTransitSlingLoadCrates[_heli:getName()] = nil
         ctld.adaptWeightToCargo(_heli:getName())
-        local _spawnedCrate = ctld.spawnCrateStatic(_heli:getCountry(), _unitId, _point, _name, _currentCrate.weight,_side)
+        local _spawnedCrate = ctld.spawnCrateStatic(_heli:getCountry(), _unitId, _point, _name, _currentCrate.weight,_side, mist.getHeading(_heli))
     end
 end
 
