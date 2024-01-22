@@ -26,7 +26,7 @@ ctld = {} -- DONT REMOVE!
 ctld.Id = "CTLD - "
 
 --- Version.
-ctld.Version = "202401.0"
+ctld.Version = "202401.0X"
 
 -- To add debugging messages to dcs.log, change the following log levels to `true`; `Debug` is less detailed than `Trace`
 ctld.Debug = false
@@ -3948,7 +3948,7 @@ function ctld.unpackAASystem(_heli, _nearestCrate, _nearbyCrates,_aaSystemTempla
                 local angular_step = arcRad / partAmount
 
                 for _i = 1, partAmount do
-                    local _angle = angular_step * (_i - 1) 
+                    local _angle = (angular_step * (_i - 1) + _hdg)%arcRad
                     local _xOffset = math.cos(_angle) * spawnDistance
                     local _yOffset = math.sin(_angle) * spawnDistance
 
